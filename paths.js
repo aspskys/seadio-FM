@@ -14,7 +14,7 @@ function platformUserDataDir() {
 }
 
 const userDataDir = platformUserDataDir();
-const sqlitePath = path.join(userDataDir, 'claudio.sqlite');
+const sqlitePath = path.join(userDataDir, 'seadio.sqlite');
 const ttsCacheDir = path.join(userDataDir, 'cache', 'tts');
 const neteaseDataDir = path.join(userDataDir, 'netease');
 const envPath = path.join(userDataDir, '.env');

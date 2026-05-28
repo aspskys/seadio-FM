@@ -1,5 +1,5 @@
 {
-  "name": "claudio-app",
+  "name": "seadio-app",
   "version": "1.0.0",
   "description": "Local AI DJ Radio powered by Claude",
   "main": "server.js",

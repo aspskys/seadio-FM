@@ -38,10 +38,10 @@ function broadcast(payload) {
 // ── Current playback state ───────────────────────────────────────────────────
 let nowPlaying = null;
 
-const STATION_NAME = 'Claudio FM';
+const STATION_NAME = 'Seadio FM';
 const PROGRAM_NAME = 'Evening Drive';
 const REFILL_TRACK_COUNT = 3;
-const PROGRAM_START_ID_TEXT = 'This is Claudio.';
+const PROGRAM_START_ID_TEXT = 'This is Seadio.';
 const TRACK_REPEAT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const ARTIST_RECENT_WINDOW = 5;
 
@@ -510,7 +510,7 @@ async function runProgramStartJob(job) {
   stationState.sessionTitle = result.title || '';
   stationState.tracks = tracks;
   if (tracks.length) nowPlaying = { title: tracks[0].title, artist: tracks[0].artist, startedAt: Date.now() };
-  addMessage('claudio', segments.filter(s => s.text).map(s => s.text).join('\n\n'));
+  addMessage('seadio', segments.filter(s => s.text).map(s => s.text).join('\n\n'));
 
   const payload = {
     type: 'program-start',
@@ -596,7 +596,7 @@ async function runBridgeGenerationJob(job) {
     programId: job.programId || stationState.programId,
     segments,
   });
-  if (segments.some(s => s.text)) addMessage('claudio', segments.filter(s => s.text).map(s => s.text).join('\n\n'));
+  if (segments.some(s => s.text)) addMessage('seadio', segments.filter(s => s.text).map(s => s.text).join('\n\n'));
   return segments;
 }
 
@@ -626,7 +626,7 @@ async function runRadioSegment(userInput, intent = {}, skipHistory = false) {
   const firstPlayableSegment = segments.find(s => s.ttsUrl && s.text && s.type !== 'silence');
   const announcement = buildAnnouncement({ ...result, segments }, tracks, failedTracks, speechOnly);
   const spokenSummary = segments.filter(s => s.text).map(s => s.text).join('\n\n');
-  addMessage('claudio', spokenSummary || announcement || result.say || '');
+  addMessage('seadio', spokenSummary || announcement || result.say || '');
   const ttsUrl = firstPlayableSegment?.ttsUrl || null;
 
   if (tracks.length) {
@@ -804,6 +804,6 @@ bootstrapNeteaseLogin().catch(err => console.warn('[netease] bootstrap skipped:'
 
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
-  console.log(`\n[电台] Claudio FM 启动 → http://localhost:${PORT}`);
+  console.log(`\n[电台] Seadio FM 启动 → http://localhost:${PORT}`);
   console.log(`[电台] 等待调度器或用户触发…\n`);
 });

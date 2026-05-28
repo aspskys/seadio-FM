@@ -26,13 +26,24 @@ pub fn run() {
                 if let Err(e) = sidecar::start_sidecars(&handle).await {
                     eprintln!("[setup] sidecar start failed: {e}");
                 }
+                if let Some(w) = handle.get_webview_window("main") {
+                    let _ = w.eval("window.location.reload()");
+                    let _ = w.show();
+                    let _ = w.set_focus();
+                }
             });
 
             let quit_item = MenuItem::with_id(app, "quit", "Quit Seadio", true, None::<&str>)?;
             let show_item = MenuItem::with_id(app, "show", "Show window", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
 
+            let icon = app
+                .default_window_icon()
+                .cloned()
+                .ok_or("missing default window icon")?;
             let _tray = TrayIconBuilder::new()
+                .icon(icon)
+                .icon_as_template(true)
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id().as_ref() {
                     "quit" => app.exit(0),

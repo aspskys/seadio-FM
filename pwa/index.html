@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Claudio FM — A private radio station</title>
+<title>Seadio FM — A private radio station</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Doto:wght@400;600&family=Space+Grotesk:wght@300;400&display=swap" rel="stylesheet">
@@ -593,7 +593,7 @@ html, body {
         <div>
           <div class="header-name">
             <div class="header-avatar">C</div>
-            Claudio
+            Seadio
           </div>
           <div class="header-status">
             <span class="dot-live" id="dotLive" style="display:none"></span>
@@ -615,7 +615,7 @@ html, body {
         <div class="session-title" id="sessionTitle"></div>
         <div class="meta-name" id="metaName">Your private<br>radio station</div>
         <div class="meta-sub">
-          <span id="metaSub">Waiting for Claudio…</span>
+          <span id="metaSub">Waiting for Seadio…</span>
           <span class="meta-source" id="metaSource" style="display:none">
             <svg width="11" height="11" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
               <path d="M11.2 1.8v6.9c0 1.4-1 2.4-2.3 2.4-1.2 0-2.1-.8-2.1-1.9 0-1.1 1-1.9 2.1-1.9.4 0 .8.1 1.1.3V3.9L5.9 5.2v5.1c0 1.4-1 2.4-2.3 2.4-1.2 0-2.1-.8-2.1-1.9 0-1.1 1-1.9 2.1-1.9.4 0 .8.1 1.1.3V2.6l6.5-.8z"/>
@@ -632,7 +632,7 @@ html, body {
       <div class="transcript-wrap">
         <div class="transcript-scroll" id="transcriptScroll">
           <div class="turn" id="emptyState">
-            <div class="turn-head"><span class="who">Claudio</span> · now</div>
+            <div class="turn-head"><span class="who">Seadio</span> · now</div>
             <div class="turn-body">
               <span class="word future">Tell</span><span> </span>
               <span class="word future">me</span><span> </span>
@@ -696,7 +696,7 @@ html, body {
 
 <!-- Chat bar -->
 <div class="chat-bar hidden" id="chatBar">
-  <textarea id="chat-input" rows="1" placeholder="Leave a note for Claudio…"></textarea>
+  <textarea id="chat-input" rows="1" placeholder="Leave a note for Seadio…"></textarea>
   <button id="chat-send" title="Patch in" aria-label="Patch in">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M5 12h13"/>
@@ -790,15 +790,15 @@ const inMusicVolume = document.getElementById('inMusicVolume');
 const lblDjVolume = document.getElementById('lblDjVolume');
 const lblMusicVolume = document.getElementById('lblMusicVolume');
 const djLanguageControl = document.getElementById('djLanguageControl');
-let djLanguage = localStorage.getItem('claudio:dj-language') === 'zh' ? 'zh' : 'en';
-let djVolume = Number(localStorage.getItem('claudio:dj-volume') || 100) / 100;
-let baseMusicVolume = Number(localStorage.getItem('claudio:music-volume') || 100) / 100;
+let djLanguage = localStorage.getItem('seadio:dj-language') === 'zh' ? 'zh' : 'en';
+let djVolume = Number(localStorage.getItem('seadio:dj-volume') || 100) / 100;
+let baseMusicVolume = Number(localStorage.getItem('seadio:music-volume') || 100) / 100;
 let ducking = false;
 let volumeFadeTimer = null;
 const BREATHING_GAP_MS = 500;
 const DUCKED_VOLUME_RATIO = 0.16;
 const SEGUE_LEAD_S = 15;   // start the DJ over the outro this many seconds before a song ends
-const REFILL_LEAD_S = 120; // ask Claudio for more music while there is still runway
+const REFILL_LEAD_S = 120; // ask Seadio for more music while there is still runway
 const REFILL_LOW_WATER_TRACKS = 2;
 const MAX_BUFFER_TRACKS = 6;
 const REFILL_BACKOFF_MS = 45000;
@@ -820,7 +820,7 @@ function syncDjLanguageControl() {
 
 function setDjLanguage(value) {
   djLanguage = value === 'zh' ? 'zh' : 'en';
-  localStorage.setItem('claudio:dj-language', djLanguage);
+  localStorage.setItem('seadio:dj-language', djLanguage);
   syncDjLanguageControl();
 }
 
@@ -852,14 +852,14 @@ function syncVolumeControls() {
 
 function setDjVolume(value) {
   djVolume = Math.max(0, Math.min(1, value));
-  localStorage.setItem('claudio:dj-volume', Math.round(djVolume * 100));
+  localStorage.setItem('seadio:dj-volume', Math.round(djVolume * 100));
   ttsAudio.volume = djVolume;
   lblDjVolume.textContent = pctLabel(djVolume);
 }
 
 function setMusicVolume(value) {
   baseMusicVolume = Math.max(0, Math.min(1, value));
-  localStorage.setItem('claudio:music-volume', Math.round(baseMusicVolume * 100));
+  localStorage.setItem('seadio:music-volume', Math.round(baseMusicVolume * 100));
   lblMusicVolume.textContent = pctLabel(baseMusicVolume);
   if (ducking) {
     musicAudio.volume = duckedMusicVolume();
@@ -1056,7 +1056,7 @@ musicAudio.addEventListener('loadedmetadata', () => {
 });
 musicAudio.addEventListener('error', () => {
   console.warn('[music] playback failed', musicAudio.error);
-  addTurn('Claudio', "That link dropped out. I'll skip ahead and keep the set moving.");
+  addTurn('Seadio', "That link dropped out. I'll skip ahead and keep the set moving.");
   if (!playNext()) setRadioStatus('Paused');
 });
 /* ── Prefetch next track ──────────────────────────────────────────── */
@@ -1216,7 +1216,7 @@ function programTimeLabel() {
 }
 
 function addSegmentTurn(segment) {
-  return addTurn('Claudio', segment.text || '', programTimeLabel());
+  return addTurn('Seadio', segment.text || '', programTimeLabel());
 }
 
 function advanceKaraoke(cur, dur) {
@@ -1370,7 +1370,7 @@ function findSegments(matchFn) {
   return scriptSegments.filter(segment => !wasSegmentHandled(segment) && matchFn(segment));
 }
 
-// Claudio speaks: show a single script segment and play its own voice asset.
+// Seadio speaks: show a single script segment and play its own voice asset.
 function speakSegmentObject(segment, onEnd) {
   if (!segment) { if (onEnd) onEnd(); return; }
   if (wasSegmentHandled(segment)) { if (onEnd) onEnd(); return; }
@@ -1546,7 +1546,7 @@ function playNext() {
       segment.trackIndex === queueIdx
     );
     if (spokenDuringOutro) {
-      // Claudio already talked over the outro. If still talking, let the track follow the voice.
+      // Seadio already talked over the outro. If still talking, let the track follow the voice.
       if (!ttsAudio.paused && !ttsAudio.ended) {
         ttsAudio.addEventListener('ended', () => playTrack(track), { once: true });
       } else {
@@ -1688,7 +1688,7 @@ function handleWsMessage(msg) {
     }
     if (msg.jobType === 'program_start') {
       setRadioStatus('Paused');
-      metaSub.textContent = 'Could not start Claudio FM';
+      metaSub.textContent = 'Could not start Seadio FM';
     }
     return;
   }
@@ -1814,13 +1814,13 @@ async function startRadio() {
   startingRadio = true;
   playBtn.disabled = true;
   setRadioStatus('On Air');
-  metaSub.textContent = 'Tuning Claudio FM…';
+  metaSub.textContent = 'Tuning Seadio FM…';
   try {
     await requestChat(buildStartMessage(), { showUserTurn: false });
   } catch (err) {
     console.error('[start-radio]', err);
     setRadioStatus('Paused');
-    metaSub.textContent = 'Could not start Claudio FM';
+    metaSub.textContent = 'Could not start Seadio FM';
   } finally {
     playBtn.disabled = false;
     startingRadio = false;
@@ -1849,7 +1849,7 @@ chatSend.addEventListener('click', sendMessage);
 
 /* ── Skin ─────────────────────────────────────────────────────────── */
 const skinControl = document.getElementById('skinControl');
-let currentSkin = localStorage.getItem('claudio:skin') || 'default';
+let currentSkin = localStorage.getItem('seadio:skin') || 'default';
 
 function applySkin(name) {
   currentSkin = name === 'glass' ? 'glass' : 'default';
@@ -1858,7 +1858,7 @@ function applySkin(name) {
   } else {
     delete document.documentElement.dataset.skin;
   }
-  localStorage.setItem('claudio:skin', currentSkin);
+  localStorage.setItem('seadio:skin', currentSkin);
   skinControl.querySelectorAll('button').forEach(btn => {
     const active = btn.dataset.skinName === currentSkin;
     btn.classList.toggle('active', active);

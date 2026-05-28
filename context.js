@@ -19,7 +19,7 @@ function sharedContext({ includeTaste = true, includeDialog = true, recentPlayLi
     : '（暂无播放记录）';
   const messages = includeDialog ? recentMessages(8) : [];
   const dialogText = messages.length
-    ? messages.map(m => `${m.role === 'user' ? '用户' : 'Claudio'}: ${m.content}`).join('\n')
+    ? messages.map(m => `${m.role === 'user' ? '用户' : 'Seadio'}: ${m.content}`).join('\n')
     : '';
 
   return [
@@ -59,7 +59,7 @@ function bridgeLengthInstruction(language) {
 function buildPrompt(userInput, queueState = '', options = {}) {
   const djLanguage = normalizeDjLanguage(options.djLanguage);
   const intentText = options.mode === 'speech-only'
-    ? 'Intent: speech-only / no-music. Do not recommend, replace, or add songs. Return an empty play array and one immediate quick_touch segment only if Claudio should speak.'
+    ? 'Intent: speech-only / no-music. Do not recommend, replace, or add songs. Return an empty play array and one immediate quick_touch segment only if Seadio should speak.'
     : 'Intent: music radio segment. Unless the user asked for one specific song, return a mini set of 2-3 playable songs.';
 
   const parts = [

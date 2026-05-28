@@ -31,7 +31,7 @@ async function callDeepSeek(prompt, options = {}) {
   const request = {
     model,
     messages: [
-      { role: 'system', content: 'You are Claudio FM. Return strict JSON only.' },
+      { role: 'system', content: 'You are Seadio FM. Return strict JSON only.' },
       { role: 'user', content: prompt },
     ],
     stream: false,

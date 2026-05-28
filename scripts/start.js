@@ -140,9 +140,9 @@ function spawnChild(name, command, args, options = {}) {
     children.delete(child);
     if (!shuttingDown && name === 'netease') {
       const detail = signal ? `signal ${signal}` : `code ${code}`;
-      console.warn(`[${name}] exited before Claudio shutdown (${detail})`);
+      console.warn(`[${name}] exited before Seadio shutdown (${detail})`);
     }
-    if (!shuttingDown && name === 'claudio') {
+    if (!shuttingDown && name === 'seadio') {
       shutdown(signal || code || 0);
     }
   });
@@ -209,7 +209,7 @@ async function startNeteaseIfNeeded() {
     : `still running as pid ${sidecar.pid}`;
   const message = `[start] Netease sidecar did not become ready within ${timeoutMs}ms (${sidecarState}).`;
   if (required) throw new Error(message);
-  console.warn(`${message} Starting Claudio anyway; music.js can still use fallback behavior.`);
+  console.warn(`${message} Starting Seadio anyway; music.js can still use fallback behavior.`);
   return { connected: false, baseUrl, required };
 }
 
@@ -231,7 +231,7 @@ async function main() {
 
   const neteaseState = await startNeteaseIfNeeded();
   await prepareNeteaseLogin(neteaseState);
-  spawnChild('claudio', process.execPath, ['server.js'], {
+  spawnChild('seadio', process.execPath, ['server.js'], {
     env: process.env,
   });
 }

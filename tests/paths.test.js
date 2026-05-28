@@ -11,8 +11,8 @@ const paths = require('../paths.js');
 
 assert.ok(paths.userDataDir.includes('Seadio'),
   `userDataDir should contain "Seadio", got: ${paths.userDataDir}`);
-assert.ok(paths.sqlitePath.endsWith('claudio.sqlite'),
-  `sqlitePath should end with claudio.sqlite, got: ${paths.sqlitePath}`);
+assert.ok(paths.sqlitePath.endsWith('seadio.sqlite'),
+  `sqlitePath should end with seadio.sqlite, got: ${paths.sqlitePath}`);
 assert.ok(paths.ttsCacheDir.endsWith(path.join('cache', 'tts')),
   `ttsCacheDir should end with cache/tts, got: ${paths.ttsCacheDir}`);
 assert.ok(paths.neteaseDataDir.endsWith(path.join('netease')),
