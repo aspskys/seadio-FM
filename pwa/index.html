@@ -578,6 +578,7 @@ html, body {
 </style>
 </head>
 <body>
+<script src="config.js"></script>
 
 <div class="stage">
   <div class="fluid blue"></div>
@@ -1069,7 +1070,7 @@ function maybePrefetch() {
   const nextUrl = queue[queueIdx + 1].streamUrl;
   if (prefetchedUrl === nextUrl) return;
   prefetchedUrl = nextUrl;
-  prefetchEl.src = nextUrl;
+  prefetchEl.src = window.SeadioConfig.api(nextUrl);
   prefetchEl.load();
   console.info('[prefetch]', nextUrl.slice(0, 80));
 }
@@ -1292,7 +1293,7 @@ function playRequestLineConnect() {
 }
 
 async function requestCallerTts(text) {
-  const res = await fetch('/api/tts/caller', {
+  const res = await fetch(window.SeadioConfig.api('/api/tts/caller'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text }),
@@ -1313,7 +1314,7 @@ function playCallerVoice(ttsUrl) {
     const done = () => resolve();
     ttsAudio.addEventListener('ended', done, { once: true });
     ttsAudio.addEventListener('error', done, { once: true });
-    ttsAudio.src = ttsUrl;
+    ttsAudio.src = window.SeadioConfig.api(ttsUrl);
     ttsAudio.play().catch(err => {
       console.error('[caller-tts-play]', err);
       afterTtsFinished();
@@ -1326,7 +1327,7 @@ function playCallerVoice(ttsUrl) {
 replayBtn.addEventListener('click', () => {
   const replayUrl = lastReplaySegment?.ttsUrl || lastTtsUrl;
   if (!replayUrl) return;
-  ttsAudio.src = replayUrl;
+  ttsAudio.src = window.SeadioConfig.api(replayUrl);
   ttsAudio.play().catch(console.error);
 });
 
@@ -1388,7 +1389,7 @@ function speakSegmentObject(segment, onEnd) {
   lastTtsUrl = segment.ttsUrl;
   lastReplaySegment = segment;
   replayBtn.style.display = '';
-  ttsAudio.src = segment.ttsUrl;
+  ttsAudio.src = window.SeadioConfig.api(segment.ttsUrl);
   if (onEnd) ttsAudio.addEventListener('ended', onEnd, { once: true });
   ttsAudio.play().catch(err => { console.error(err); afterTtsFinished(); if (onEnd) onEnd(); });
 }
@@ -1498,7 +1499,7 @@ function autoRefill() {
   lastRefillAt = Date.now();
   autoRefilling = true;
   const previousIndex = queue.length - 1;
-  fetch('/api/radio/refill', {
+  fetch(window.SeadioConfig.api('/api/radio/refill'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -1635,7 +1636,7 @@ function offsetSegmentsForQueue(segments, queueStart) {
 /* ── WebSocket ────────────────────────────────────────────────────── */
 let ws;
 function connectWS() {
-  ws = new WebSocket(`ws://${location.host}/stream`);
+  ws = new WebSocket(window.SeadioConfig.wsUrl('/stream'));
   ws.onopen = () => console.log('[ws] connected');
   ws.onclose = () => setTimeout(connectWS, 3000);
   ws.onerror = () => ws.close();
@@ -1783,7 +1784,7 @@ document.addEventListener('keydown', e => {
 
 async function requestChat(message, { showUserTurn = true } = {}) {
   if (showUserTurn) addUserTurn(message);
-  await fetch('/api/chat', {
+  await fetch(window.SeadioConfig.api('/api/chat'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, djLanguage }),
