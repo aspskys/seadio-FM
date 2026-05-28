@@ -3,6 +3,7 @@ node_modules/
 cache/tts/*.mp3
 docs/*
 !docs/superpowers/
+!docs/android-mvp.md
 *.sqlite
 *.db
 Kokoro-FastAPI/
