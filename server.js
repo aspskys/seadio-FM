@@ -18,6 +18,21 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/stream' });
 
 app.use(express.json());
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'pwa')));
 
 // ── WebSocket broadcast ──────────────────────────────────────────────────────
@@ -803,7 +818,8 @@ const { bootstrapNeteaseLogin } = require('./netease-session');
 bootstrapNeteaseLogin().catch(err => console.warn('[netease] bootstrap skipped:', err.message));
 
 const PORT = process.env.PORT || 8080;
-server.listen(PORT, () => {
-  console.log(`\n[电台] Seadio FM 启动 → http://localhost:${PORT}`);
+const HOST = process.env.HOST || '0.0.0.0';
+server.listen(PORT, HOST, () => {
+  console.log(`\n[电台] Seadio FM 启动 → http://${HOST}:${PORT}`);
   console.log(`[电台] 等待调度器或用户触发…\n`);
 });
