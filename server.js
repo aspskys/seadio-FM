@@ -780,8 +780,27 @@ app.get('/api/tts/:filename', (req, res) => {
   res.sendFile(file);
 });
 
+// Serve the Netease QR login page for the desktop shell.
+app.get('/netease/qr-login', (req, res) => {
+  const { neteaseDataDir } = require('./paths');
+  const file = path.join(neteaseDataDir, 'qr-login.html');
+  if (!fs.existsSync(file)) {
+    return res.status(404).type('text/html').send(
+      '<html><body style="font-family:system-ui;padding:40px">' +
+      '<h2>QR login page not generated yet.</h2>' +
+      '<p>The desktop shell will generate it shortly. Reload this window in a few seconds.</p>' +
+      '</body></html>'
+    );
+  }
+  res.sendFile(file);
+});
+
 // ── Boot ─────────────────────────────────────────────────────────────────────
 scheduler.init(broadcast, runRadioSegment);
+
+// Trigger Netease login bootstrap (generates QR HTML if no cookie). Non-blocking.
+const { bootstrapNeteaseLogin } = require('./netease-session');
+bootstrapNeteaseLogin().catch(err => console.warn('[netease] bootstrap skipped:', err.message));
 
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {

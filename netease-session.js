@@ -6,7 +6,8 @@ const DEFAULT_NETEASE_BASE = 'http://127.0.0.1:3000';
 const DEFAULT_REQUEST_TIMEOUT_MS = 8000;
 const DEFAULT_LOGIN_TIMEOUT_MS = 180000;
 
-const DATA_DIR = path.join(__dirname, 'data', 'netease');
+const { neteaseDataDir } = require('./paths');
+const DATA_DIR = neteaseDataDir;
 const LOCAL_CONFIG_PATH = path.join(DATA_DIR, 'local.config.json');
 const QR_LOGIN_PATH = path.join(DATA_DIR, 'qr-login.html');
 
@@ -249,8 +250,8 @@ async function bootstrapNeteaseLogin({ baseUrl = neteaseBaseUrl(), required = fa
   if (qr.qrUrl) console.log(`[netease-login] QR URL: ${qr.qrUrl}`);
   if (qr.qrPage) console.log(`[netease-login] QR page: ${qr.qrPage}`);
 
-  const opened = openUrl(qr.qrPage || qr.qrUrl);
-  console.log(`[netease-login] Browser open: ${opened ? 'attempted' : 'skipped'}`);
+  // Desktop shell opens the QR window via /netease/qr-login; do not shell to system browser.
+  console.log('[netease-login] QR page generated; desktop shell will display it.');
 
   const result = await pollQrLogin({
     baseUrl,

@@ -1,10 +1,16 @@
 node_modules/
 .env
 cache/tts/*.mp3
-docs/
+docs/*
+!docs/superpowers/
 *.sqlite
 *.db
 Kokoro-FastAPI/
+
+# Desktop build artifacts
+bin/
+src-tauri/target/
+vendor/netease-api/node_modules/
 
 # Local agent/development memory
 .agents/
