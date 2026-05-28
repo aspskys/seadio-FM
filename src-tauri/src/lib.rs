@@ -1,9 +1,11 @@
 mod sidecar;
+mod qr_window;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .invoke_handler(tauri::generate_handler![qr_window::open_netease_qr])
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(

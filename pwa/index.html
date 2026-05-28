@@ -1916,5 +1916,20 @@ document.getElementById('swatches').addEventListener('click', e => {
   });
 });
 </script>
+<script>
+  if (window.__TAURI_INTERNALS__) {
+    const btn = document.createElement('button');
+    btn.textContent = 'Netease Login';
+    Object.assign(btn.style, {
+      position: 'fixed', right: '14px', bottom: '14px', zIndex: 9999,
+      padding: '10px 14px', borderRadius: '20px',
+      background: '#222', color: '#fff', border: '1px solid #444',
+      font: '13px/1.2 system-ui', cursor: 'pointer'
+    });
+    btn.onclick = () => window.__TAURI__.core.invoke('open_netease_qr')
+      .catch(err => alert('Failed to open QR window: ' + err));
+    document.body.appendChild(btn);
+  }
+</script>
 </body>
 </html>
