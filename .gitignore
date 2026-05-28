@@ -44,3 +44,7 @@ android/capacitor.build.gradle
 # Android release signing — real artefacts stay local
 android/app/*.jks
 android/app/keystore.properties
+
+# Cloudflare Tunnel — real config + credentials stay local
+cloudflared/config.yml
+cloudflared/*.json

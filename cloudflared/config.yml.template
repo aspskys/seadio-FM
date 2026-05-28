@@ -1,0 +1,20 @@
+# Cloudflare Tunnel ingress for Seadio backend.
+# Copy to cloudflared/config.yml and fill the placeholders.
+#
+# Placeholders:
+#   <TUNNEL_UUID>      — printed by `cloudflared tunnel create seadio`
+#   <YOUR_DOMAIN>      — e.g. example.com (must be a CF-managed zone)
+#
+# Real config.yml + the *.json credentials file are gitignored.
+
+tunnel: <TUNNEL_UUID>
+credentials-file: /Users/aspskys/.cloudflared/<TUNNEL_UUID>.json
+
+ingress:
+  - hostname: api.seadio.<YOUR_DOMAIN>
+    service: http://localhost:8080
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 10s
+      # WebSocket support is on by default — no extra config needed.
+  - service: http_status:404
