@@ -1,0 +1,35 @@
+// Project-local Gradle init script: route ALL repositories through CN mirrors.
+// Invoked via `gradlew -I gradle-mirror.init.gradle`. Not committed/active by default.
+
+def mirrorRepos = { handler ->
+    handler.all { repo ->
+        if (repo instanceof MavenArtifactRepository) {
+            def u = repo.url?.toString() ?: ''
+            if (u.contains('repo.maven.apache.org')
+                || u.contains('repo1.maven.org')
+                || u.contains('dl.google.com')
+                || u.contains('plugins.gradle.org')
+                || u.contains('jcenter.bintray.com')) {
+                handler.remove(repo)
+            }
+        }
+    }
+    handler.maven { url 'https://maven.aliyun.com/repository/google' }
+    handler.maven { url 'https://maven.aliyun.com/repository/public' }
+    handler.maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+    handler.maven { url 'https://maven.aliyun.com/repository/central' }
+    handler.maven { url 'https://maven.aliyun.com/repository/jcenter' }
+}
+
+allprojects {
+    buildscript {
+        repositories { mirrorRepos(delegate) }
+    }
+    repositories { mirrorRepos(delegate) }
+}
+
+settingsEvaluated { settings ->
+    settings.pluginManagement {
+        repositories { mirrorRepos(delegate) }
+    }
+}
