@@ -16,9 +16,15 @@
     "test": "node tests/paths.test.js && node tests/server-base.test.js",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d && docker compose logs -f",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "cap:sync": "cap sync android",
+    "cap:open": "cap open android",
+    "cap:build:debug": "cd android && ./gradlew assembleDebug",
+    "cap:install:debug": "adb install -r android/app/build/outputs/apk/debug/app-debug.apk"
   },
   "dependencies": {
+    "@capacitor/android": "^7",
+    "@capacitor/core": "^7",
     "NeteaseCloudMusicApi": "^4.32.0",
     "better-sqlite3": "^12.10.0",
     "dotenv": "^16.4.5",
@@ -28,6 +34,8 @@
     "ws": "^8.17.0"
   },
   "devDependencies": {
-    "@yao-pkg/pkg": "^6.20.0"
+    "@capacitor/cli": "^7",
+    "@yao-pkg/pkg": "^6.20.0",
+    "typescript": "^6.0.3"
   }
 }

@@ -30,3 +30,12 @@ skills/netease-music/data/*
 
 # Claudio local Netease login state. May contain cookies and private QR pages.
 data/netease/*
+
+# Capacitor / Android build artefacts
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/capacitor.settings.gradle
+android/capacitor.build.gradle
