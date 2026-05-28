@@ -40,3 +40,7 @@ android/local.properties
 android/.idea/
 android/capacitor.settings.gradle
 android/capacitor.build.gradle
+
+# Android release signing — real artefacts stay local
+android/app/*.jks
+android/app/keystore.properties
