@@ -1,0 +1,30 @@
+{
+  "name": "seadio-server",
+  "main": "server.js",
+  "bin": "server.js",
+  "pkg": {
+    "assets": [
+      "pwa/**/*",
+      "user/**/*",
+      "prompts/**/*",
+      "node_modules/better-sqlite3/build/Release/*.node",
+      "node_modules/better-sqlite3/lib/**/*"
+    ],
+    "scripts": [
+      "router.js",
+      "scheduler.js",
+      "context.js",
+      "claude.js",
+      "llm.js",
+      "tts.js",
+      "music.js",
+      "music-netease.js",
+      "music-yt-dlp.js",
+      "state.js",
+      "netease-session.js",
+      "paths.js"
+    ],
+    "targets": ["node22-macos-arm64"],
+    "outputPath": "bin"
+  }
+}

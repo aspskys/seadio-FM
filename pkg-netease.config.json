@@ -1,0 +1,12 @@
+{
+  "name": "netease-api",
+  "main": "vendor/netease-api/app.js",
+  "bin": "vendor/netease-api/app.js",
+  "pkg": {
+    "assets": [
+      "node_modules/NeteaseCloudMusicApi/**/*"
+    ],
+    "targets": ["node22-macos-arm64"],
+    "outputPath": "bin"
+  }
+}

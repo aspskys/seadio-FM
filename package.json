@@ -7,7 +7,12 @@
     "start": "node scripts/start.js",
     "start:server": "node server.js",
     "netease:check": "node scripts/netease-status.js",
-    "netease:login": "node scripts/netease-login.js"
+    "netease:login": "node scripts/netease-login.js",
+    "pkg:server": "pkg --config pkg-server.config.json --output bin/seadio-server-aarch64-apple-darwin server.js",
+    "pkg:netease": "pkg --config pkg-netease.config.json --output bin/netease-api-aarch64-apple-darwin vendor/netease-api/app.js",
+    "pkg:all": "yarn pkg:server && yarn pkg:netease",
+    "tauri:dev": "cd src-tauri && cargo tauri dev",
+    "tauri:build": "cd src-tauri && cargo tauri build"
   },
   "dependencies": {
     "NeteaseCloudMusicApi": "^4.32.0",
@@ -17,5 +22,8 @@
     "node-cron": "^3.0.3",
     "openai": "^6.9.1",
     "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "@yao-pkg/pkg": "^6.20.0"
   }
 }
