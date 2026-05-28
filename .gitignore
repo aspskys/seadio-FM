@@ -4,6 +4,7 @@ cache/tts/*.mp3
 docs/*
 !docs/superpowers/
 !docs/android-mvp.md
+!docs/week6-release-playbook.md
 *.sqlite
 *.db
 Kokoro-FastAPI/
