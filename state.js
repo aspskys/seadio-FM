@@ -1,7 +1,7 @@
 const Database = require('better-sqlite3');
-const path = require('path');
+const { sqlitePath } = require('./paths');
 
-const db = new Database(path.join(__dirname, 'claudio.sqlite'));
+const db = new Database(sqlitePath);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS plays (
