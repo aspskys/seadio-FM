@@ -22,7 +22,7 @@
     ],
     "security": {
       "csp": null,
-      "capabilities": ["default"]
+      "capabilities": ["default", "sidecar"]
     },
     "trayIcon": {
       "iconPath": "icons/icon.png",

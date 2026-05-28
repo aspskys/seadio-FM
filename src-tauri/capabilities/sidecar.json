@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "sidecar",
+  "description": "Allow spawning bundled sidecars",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        { "name": "seadio-server", "sidecar": true, "args": true },
+        { "name": "netease-api", "sidecar": true, "args": true }
+      ]
+    }
+  ]
+}
