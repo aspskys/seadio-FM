@@ -1,0 +1,10 @@
+node_modules
+bin
+src-tauri
+vendor/netease-api/node_modules
+.git
+docs
+.DS_Store
+*.log
+data
+.env
