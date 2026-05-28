@@ -1957,11 +1957,13 @@ document.getElementById('swatches').addEventListener('click', e => {
     const form = document.getElementById('seadio-settings-form');
     const openBtn = document.getElementById('seadio-settings-open');
 
-    openBtn.addEventListener('click', () => {
+    function openDialog() {
       input.value = (localStorage.getItem('seadio:server-base') || '');
       if (typeof dlg.showModal === 'function') dlg.showModal();
       else dlg.setAttribute('open', '');
-    });
+    }
+
+    openBtn.addEventListener('click', openDialog);
 
     form.addEventListener('submit', (e) => {
       const btn = e.submitter;
@@ -1971,6 +1973,12 @@ document.getElementById('swatches').addEventListener('click', e => {
       else window.SeadioConfig.setServerBase(v);
       location.reload();
     });
+
+    const inCapacitor = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+    const hasOverride = !!(localStorage.getItem('seadio:server-base') || '').trim();
+    if (inCapacitor && !hasOverride) {
+      window.addEventListener('DOMContentLoaded', openDialog, { once: true });
+    }
   })();
 </script>
 </body>
