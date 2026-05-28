@@ -19,11 +19,7 @@ async function callDeepSeek(prompt, options = {}) {
     throw new Error('DEEPSEEK_API_KEY not set');
   }
 
-  const OpenAI = await loadOpenAI();
-  const client = new OpenAI({
-    baseURL: process.env.DEEPSEEK_BASE_URL || DEEPSEEK_BASE_URL,
-    apiKey: process.env.DEEPSEEK_API_KEY,
-  });
+  const baseUrl = (process.env.DEEPSEEK_BASE_URL || DEEPSEEK_BASE_URL).replace(/\/+$/, '');
   const model = options.model || process.env.DEEPSEEK_MODEL || DEEPSEEK_MODEL;
   const startAt = Date.now();
   console.log(`[LLM:deepseek] 调用中，model ${model}，prompt ${prompt.length} 字符…`);
@@ -39,16 +35,69 @@ async function callDeepSeek(prompt, options = {}) {
   if (DEEPSEEK_THINKING) request.thinking = { type: DEEPSEEK_THINKING };
   if (DEEPSEEK_REASONING_EFFORT) request.reasoning_effort = DEEPSEEK_REASONING_EFFORT;
 
-  const completion = await withTimeout(
-    client.chat.completions.create(request),
-    options.timeoutMs || DEFAULT_TIMEOUT_MS,
-    `DeepSeek request timed out after ${Math.round((options.timeoutMs || DEFAULT_TIMEOUT_MS) / 1000)}s`
-  );
+  const timeoutMs = options.timeoutMs || DEFAULT_TIMEOUT_MS;
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), timeoutMs);
+  let res;
+  try {
+    res = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+      signal: ac.signal,
+    });
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.name === 'AbortError') throw new Error(`DeepSeek request timed out after ${Math.round(timeoutMs / 1000)}s`);
+    throw err;
+  }
+  clearTimeout(timer);
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error(`DeepSeek HTTP ${res.status}: ${errText.slice(0, 400)}`);
+  }
+  const text = await res.text();
+  const completion = parseCompletionEnvelope(text);
   const elapsed = ((Date.now() - startAt) / 1000).toFixed(1);
   const raw = completion.choices?.[0]?.message?.content?.trim() || '';
   const parsed = parseResponse(raw);
   logParsedResponse('deepseek', elapsed, parsed, raw);
   return parsed;
+}
+
+// Some OpenAI-compatible relays (e.g. bigbang20 for Claude) ignore stream:false
+// and still send `text/event-stream`. Parse both shapes.
+function parseCompletionEnvelope(text) {
+  const trimmed = text.trim();
+  if (!trimmed) return {};
+  if (trimmed.startsWith('{')) {
+    try { return JSON.parse(trimmed); } catch {}
+  }
+  let aggregated = '';
+  let lastEnvelope = null;
+  for (const line of trimmed.split(/\r?\n/)) {
+    const m = line.match(/^data:\s*(.*)$/);
+    if (!m) continue;
+    const payload = m[1].trim();
+    if (!payload || payload === '[DONE]') continue;
+    try {
+      const obj = JSON.parse(payload);
+      lastEnvelope = obj;
+      const delta = obj.choices?.[0]?.delta?.content;
+      const full = obj.choices?.[0]?.message?.content;
+      if (typeof delta === 'string') aggregated += delta;
+      else if (typeof full === 'string') aggregated = full;
+    } catch {}
+  }
+  if (lastEnvelope) {
+    lastEnvelope.choices = lastEnvelope.choices || [{}];
+    lastEnvelope.choices[0].message = { role: 'assistant', content: aggregated };
+    return lastEnvelope;
+  }
+  return {};
 }
 
 async function loadOpenAI() {
