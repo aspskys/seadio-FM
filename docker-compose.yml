@@ -1,0 +1,13 @@
+services:
+  seadio:
+    image: seadio:dev
+    build: .
+    container_name: seadio
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+    environment:
+      MUSIC_PROVIDER: netease
+      # DEEPSEEK_API_KEY / VOLCENGINE_TTS_API_KEY are read from data/.env at runtime
+    restart: unless-stopped

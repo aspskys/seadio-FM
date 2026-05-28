@@ -12,7 +12,11 @@
     "pkg:netease": "pkg --config pkg-netease.config.json --output bin/netease-api-aarch64-apple-darwin vendor/netease-api/app.js",
     "pkg:all": "yarn pkg:server && yarn pkg:netease",
     "tauri:dev": "cd src-tauri && cargo tauri dev",
-    "tauri:build": "cd src-tauri && cargo tauri build"
+    "tauri:build": "cd src-tauri && cargo tauri build",
+    "test": "node tests/paths.test.js && node tests/server-base.test.js",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d && docker compose logs -f",
+    "docker:down": "docker compose down"
   },
   "dependencies": {
     "NeteaseCloudMusicApi": "^4.32.0",
