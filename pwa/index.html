@@ -1936,9 +1936,11 @@ document.getElementById('swatches').addEventListener('click', e => {
   <form method="dialog" id="seadio-settings-form">
     <h3 style="margin:0 0 12px;font-size:15px">Seadio server</h3>
     <p style="margin:0 0 8px;color:#666">
-      Leave blank to use the same host that served this page.
+      Cloudflare Tunnel URL (e.g. https://api.seadio.your-domain) or a LAN
+      address like http://192.168.x.y:8080. Leave blank to use the same host
+      that served this page.
     </p>
-    <input id="seadio-settings-url" type="url" placeholder="https://radio.example.com"
+    <input id="seadio-settings-url" type="url" placeholder="https://api.seadio.your-domain"
            style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font:13px system-ui" />
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
       <button value="cancel" type="submit" style="padding:6px 12px">Cancel</button>

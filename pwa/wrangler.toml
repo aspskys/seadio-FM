@@ -1,0 +1,6 @@
+name = "seadio"
+compatibility_date = "2026-05-28"
+pages_build_output_dir = "."
+
+# Static-only — no Functions / Workers needed; PWA talks to the API via the
+# Cloudflare Tunnel hostname configured by the user in the in-app settings.
