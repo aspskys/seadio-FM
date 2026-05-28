@@ -1981,5 +1981,37 @@ document.getElementById('swatches').addEventListener('click', e => {
     }
   })();
 </script>
+<script>
+  // Bridge HTMLAudioElement playback to the native foreground service so Android
+  // keeps the stream alive when the screen is off / the app is backgrounded.
+  (function () {
+    const cap = window.Capacitor;
+    if (!cap || !cap.isNativePlatform || !cap.isNativePlatform()) return;
+    const plugin = cap.Plugins && cap.Plugins.SeadioMedia;
+    if (!plugin) return;
+
+    const music = document.getElementById('music-audio');
+    const tts   = document.getElementById('tts-audio');
+    let active = false;
+
+    const anyPlaying = () =>
+      (music && !music.paused && !music.ended) ||
+      (tts && !tts.paused && !tts.ended);
+
+    const sync = () => {
+      const want = anyPlaying();
+      if (want === active) return;
+      active = want;
+      (want ? plugin.start() : plugin.stop()).catch((e) =>
+        console.warn('[SeadioMedia] bridge call failed', e)
+      );
+    };
+
+    ['play', 'pause', 'ended', 'emptied'].forEach((ev) => {
+      if (music) music.addEventListener(ev, sync);
+      if (tts)   tts.addEventListener(ev, sync);
+    });
+  })();
+</script>
 </body>
 </html>
