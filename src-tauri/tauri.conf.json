@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Seadio",
+  "version": "0.1.0",
+  "identifier": "com.seadio.fm",
+  "build": {
+    "frontendDist": "http://127.0.0.1:8080",
+    "devUrl": "http://127.0.0.1:8080",
+    "beforeBuildCommand": "yarn pkg:all"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Seadio FM",
+        "width": 1100,
+        "height": 720,
+        "minWidth": 900,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null,
+      "capabilities": ["default"]
+    },
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns"
+    ],
+    "externalBin": [
+      "../bin/seadio-server",
+      "../bin/netease-api"
+    ]
+  }
+}
