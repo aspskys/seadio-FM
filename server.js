@@ -751,6 +751,15 @@ app.post('/api/radio/refill', (req, res) => {
   res.json({ queued: accepted, jobType: 'music_refill', programId: effectiveProgramId });
 });
 
+app.get('/api/health', (req, res) => {
+  res.json({
+    ok: true,
+    uptime: Math.round(process.uptime()),
+    pid: process.pid,
+    rss: process.memoryUsage().rss,
+  });
+});
+
 app.get('/api/now', (req, res) => {
   res.json(nowPlaying || { playing: false });
 });

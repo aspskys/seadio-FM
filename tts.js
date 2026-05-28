@@ -3,9 +3,12 @@ const path = require('path');
 const crypto = require('crypto');
 const https = require('https');
 const { ttsCacheDir } = require('./paths');
+const { evictIfOver } = require('./cache-evict');
 
 const CACHE_DIR = ttsCacheDir;
 fs.mkdirSync(CACHE_DIR, { recursive: true });
+
+const TTS_CACHE_MAX_BYTES = Number(process.env.TTS_CACHE_MAX_BYTES || 200 * 1024 * 1024);
 
 const VOLCENGINE_DEFAULT_ENDPOINT = 'https://openspeech.bytedance.com/api/v3/tts/unidirectional';
 
@@ -42,6 +45,11 @@ function synthesize(text, options = {}) {
 
   return promise.then(p => {
     console.log(`[TTS] 完成 (${((Date.now() - startAt) / 1000).toFixed(1)}s) → ${path.basename(p)}`);
+    try {
+      evictIfOver(CACHE_DIR, TTS_CACHE_MAX_BYTES);
+    } catch (e) {
+      console.warn('[TTS] cache eviction skipped:', e.message);
+    }
     return p;
   });
 }
