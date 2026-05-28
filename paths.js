@@ -13,7 +13,7 @@ function platformUserDataDir() {
   return path.join(process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'), appName);
 }
 
-const userDataDir = platformUserDataDir();
+const userDataDir = process.env.SEADIO_DATA_DIR || platformUserDataDir();
 const sqlitePath = path.join(userDataDir, 'seadio.sqlite');
 const ttsCacheDir = path.join(userDataDir, 'cache', 'tts');
 const neteaseDataDir = path.join(userDataDir, 'netease');

@@ -25,4 +25,16 @@ assert.ok(fs.existsSync(paths.neteaseDataDir), 'neteaseDataDir should be created
 assert.ok(typeof paths.resourceDir === 'function', 'resourceDir should be a function');
 assert.ok(fs.existsSync(paths.resourceDir()), 'resourceDir() should exist');
 
+// SEADIO_DATA_DIR override
+{
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'seadio-data-'));
+  process.env.SEADIO_DATA_DIR = tmp;
+  delete require.cache[require.resolve('../paths.js')];
+  const p = require('../paths.js');
+  assert.strictEqual(p.userDataDir, tmp, 'SEADIO_DATA_DIR should override userDataDir');
+  assert.ok(p.sqlitePath.startsWith(tmp), 'sqlitePath should live under SEADIO_DATA_DIR');
+  delete process.env.SEADIO_DATA_DIR;
+  delete require.cache[require.resolve('../paths.js')];
+}
+
 console.log('paths.test.js OK');
