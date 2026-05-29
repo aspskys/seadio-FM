@@ -1795,6 +1795,89 @@ chatInput.addEventListener('input', () => {
 });
 chatSend.addEventListener('click', sendMessage);
 
+/* ── Voice input (hold-to-speak) ─────────────────────────────────── */
+const chatMic = document.getElementById('chat-mic');
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (!SpeechRecognition) {
+  chatMic.classList.add('hidden');
+} else {
+  let recognition = null;
+  let recognizing = false;
+  let recognitionInsertStart = 0;
+
+  function ensureRecognition() {
+    if (recognition) return recognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'zh-CN';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    let interim = '';
+    recognition.addEventListener('result', e => {
+      let finalText = '';
+      interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const res = e.results[i];
+        if (res.isFinal) finalText += res[0].transcript;
+        else interim += res[0].transcript;
+      }
+      const fixed = chatInput.value.slice(0, recognitionInsertStart);
+      chatInput.value = fixed + finalText + interim;
+      chatInput.style.height = 'auto';
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 84) + 'px';
+      if (finalText) recognitionInsertStart += finalText.length;
+    });
+    recognition.addEventListener('error', e => {
+      console.error('[speech]', e.error);
+      stopRecognizing();
+    });
+    recognition.addEventListener('end', () => {
+      if (recognizing) {
+        // 用户还在按住但 recognition 自己停了，重启一次
+        try { recognition.start(); } catch (err) { console.error('[speech-restart]', err); }
+      }
+    });
+    return recognition;
+  }
+
+  function startRecognizing() {
+    if (recognizing) return;
+    const r = ensureRecognition();
+    recognizing = true;
+    recognitionInsertStart = chatInput.value.length;
+    chatMic.classList.add('recording');
+    try {
+      r.start();
+    } catch (err) {
+      console.error('[speech-start]', err);
+      stopRecognizing();
+    }
+  }
+
+  function stopRecognizing() {
+    if (!recognizing) return;
+    recognizing = false;
+    chatMic.classList.remove('recording');
+    if (recognition) {
+      try { recognition.stop(); } catch (err) { console.error('[speech-stop]', err); }
+    }
+  }
+
+  // 鼠标 + 触摸两套事件
+  chatMic.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    startRecognizing();
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => {
+    chatMic.addEventListener(ev, () => stopRecognizing());
+  });
+
+  // 防止上下文菜单/选中
+  chatMic.addEventListener('contextmenu', e => e.preventDefault());
+}
+
 /* ── Skin ─────────────────────────────────────────────────────────── */
 const skinControl = document.getElementById('skinControl');
 let currentSkin = localStorage.getItem('seadio:skin') || 'default';
