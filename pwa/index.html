@@ -307,6 +307,15 @@ html, body {
 #chat-mic { background: rgba(255,255,255,.12); color: rgba(255,255,255,.92); }
 #chat-mic:hover { background: rgba(255,255,255,.20); transform: scale(1.04); }
 #chat-mic.recording { background: rgb(255,72,72); color: rgb(255,255,255); }
+#chat-mic.recording { animation: 0.6s ease-in-out 0s infinite mic-shake; }
+@keyframes mic-shake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-1px, 1px); }
+  40% { transform: translate(1px, -1px); }
+  60% { transform: translate(-1px, -1px); }
+  80% { transform: translate(1px, 1px); }
+}
+@media (prefers-reduced-motion: reduce) { #chat-mic.recording { animation: none; } }
 #chat-mic svg { width: 16px; height: 16px; }
 #chat-mic.hidden { display: none; }
 
@@ -1831,6 +1840,7 @@ if (!SpeechRecognition) {
     });
     recognition.addEventListener('error', e => {
       console.error('[speech]', e.error);
+      recognition = null;
       stopRecognizing();
     });
     recognition.addEventListener('end', () => {
