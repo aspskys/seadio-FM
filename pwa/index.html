@@ -267,6 +267,17 @@ html, body {
 }
 .play-btn:hover { transform: scale(1.04); }
 .play-btn:active { transform: scale(.96); }
+.skip-btn {
+  width: 36px; height: 36px; border-radius: 999px;
+  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.14);
+  color: rgba(255,255,255,.88);
+  display: grid; place-items: center; cursor: pointer; padding: 0;
+  transition: background .15s, transform .12s;
+  margin-left: 8px;
+}
+.skip-btn:hover { background: rgba(255,255,255,.20); transform: scale(1.04); }
+.skip-btn:disabled { opacity: .4; cursor: not-allowed; }
+.skip-btn svg { width: 16px; height: 16px; }
 
 /* ── Request line (resident inside card body) ─────────────────────── */
 .chat-bar {
@@ -656,6 +667,12 @@ html, body {
             <path d="M3.5 2.2 L11.5 7 L3.5 11.8 Z" fill="currentColor"/>
           </svg>
         </button>
+        <button class="skip-btn" id="skipBtn" type="button" aria-label="下一首" title="下一首">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="5 4 15 12 5 20" fill="currentColor"/>
+            <line x1="19" y1="5" x2="19" y2="19"/>
+          </svg>
+        </button>
       </div>
 
       <!-- Request line: resident input row -->
@@ -725,6 +742,7 @@ html, body {
 const ttsAudio   = document.getElementById('tts-audio');
 const musicAudio = document.getElementById('music-audio');
 const playBtn    = document.getElementById('playBtn');
+const skipBtn    = document.getElementById('skipBtn');
 const iconPlay   = document.getElementById('iconPlay');
 const iconPause  = document.getElementById('iconPause');
 const playerTime   = document.getElementById('playerTime');
@@ -1029,6 +1047,19 @@ musicAudio.addEventListener('timeupdate', () => {
     if (remaining <= SEGUE_LEAD_S) maybeStartOutroTalk();
   }
 });
+
+async function skipCurrent() {
+  skipBtn.disabled = true;
+  try {
+    await fetch(window.SeadioConfig.api('/api/next'), { method: 'POST' });
+  } catch (err) {
+    console.error('[skip]', err);
+  } finally {
+    setTimeout(() => { skipBtn.disabled = false; }, 800);
+  }
+}
+
+skipBtn.addEventListener('click', skipCurrent);
 
 playBtn.addEventListener('click', async () => {
   if (musicAudio.src && musicAudio.paused) {
@@ -1744,10 +1775,12 @@ async function startRadio() {
 async function sendMessage() {
   const text = chatInput.value.trim();
   if (!text) return;
+  chatSend.disabled = true;
   chatInput.value = '';
   chatInput.style.height = 'auto';
-  chatSend.disabled = true;
   try {
+    // 立即切下一首，让用户感觉「即时响应」
+    fetch(window.SeadioConfig.api('/api/next'), { method: 'POST' }).catch(err => console.error('[cut-in:next]', err));
     await patchCallerIntoStation(text);
   } catch (err) { console.error('[chat]', err); }
   finally { chatSend.disabled = false; }
