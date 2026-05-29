@@ -594,12 +594,12 @@ html, body {
         <div>
           <div class="header-name">
             <div class="header-avatar">C</div>
-            Seadio
+            Seadio FM
           </div>
           <div class="header-status">
             <span class="dot-live" id="dotLive" style="display:none"></span>
-            <span id="headerStatus">Paused</span>
-            <button class="replay-btn" id="replayBtn" style="display:none">↩ replay</button>
+            <span id="headerStatus">已暂停</span>
+            <button class="replay-btn" id="replayBtn" style="display:none">↩ 重播</button>
           </div>
         </div>
         <div class="header-time" id="headerTime">—:—</div>
@@ -614,9 +614,9 @@ html, body {
       <!-- Meta -->
       <div class="meta">
         <div class="session-title" id="sessionTitle"></div>
-        <div class="meta-name" id="metaName">Your private<br>radio station</div>
+        <div class="meta-name" id="metaName">你的私人<br>电台</div>
         <div class="meta-sub">
-          <span id="metaSub">Waiting for Seadio…</span>
+          <span id="metaSub">等待 Seadio…</span>
           <span class="meta-source" id="metaSource" style="display:none">
             <svg width="11" height="11" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
               <path d="M11.2 1.8v6.9c0 1.4-1 2.4-2.3 2.4-1.2 0-2.1-.8-2.1-1.9 0-1.1 1-1.9 2.1-1.9.4 0 .8.1 1.1.3V3.9L5.9 5.2v5.1c0 1.4-1 2.4-2.3 2.4-1.2 0-2.1-.8-2.1-1.9 0-1.1 1-1.9 2.1-1.9.4 0 .8.1 1.1.3V2.6l6.5-.8z"/>
@@ -633,16 +633,14 @@ html, body {
       <div class="transcript-wrap">
         <div class="transcript-scroll" id="transcriptScroll">
           <div class="turn" id="emptyState">
-            <div class="turn-head"><span class="who">Seadio</span> · now</div>
+            <div class="turn-head"><span class="who">Seadio</span> · 此刻</div>
             <div class="turn-body">
-              <span class="word future">Tell</span><span> </span>
-              <span class="word future">me</span><span> </span>
-              <span class="word future">what</span><span> </span>
-              <span class="word future">you're</span><span> </span>
-              <span class="word future">in</span><span> </span>
-              <span class="word future">the</span><span> </span>
-              <span class="word future">mood</span><span> </span>
-              <span class="word future">for.</span>
+              <span class="word future">告诉</span><span> </span>
+              <span class="word future">我</span><span> </span>
+              <span class="word future">你</span><span> </span>
+              <span class="word future">现在</span><span> </span>
+              <span class="word future">想听</span><span> </span>
+              <span class="word future">什么。</span>
             </div>
           </div>
           <div style="height:20px"></div>
@@ -714,31 +712,24 @@ html, body {
   </svg>
 </button>
 <div class="tweaks" id="tweaks">
-  <h3>Tweaks</h3>
+  <h3>设置</h3>
   <div class="tweak-row">
-    <label>Skin</label>
+    <label>外观</label>
     <div class="segmented" id="skinControl" role="group" aria-label="Skin">
-      <button type="button" data-skin-name="default" aria-pressed="true">Cosmic</button>
-      <button type="button" data-skin-name="glass" aria-pressed="false">Glass</button>
+      <button type="button" data-skin-name="default" aria-pressed="true">星空</button>
+      <button type="button" data-skin-name="glass" aria-pressed="false">玻璃</button>
     </div>
   </div>
   <div class="tweak-row">
-    <label>DJ language</label>
-    <div class="segmented" id="djLanguageControl" role="group" aria-label="DJ language">
-      <button type="button" data-lang="en" aria-pressed="true">English</button>
-      <button type="button" data-lang="zh" aria-pressed="false">中文</button>
-    </div>
-  </div>
-  <div class="tweak-row">
-    <label>DJ volume <span id="lblDjVolume">100%</span></label>
+    <label>DJ 音量 <span id="lblDjVolume">100%</span></label>
     <input type="range" id="inDjVolume" min="0" max="100" value="100">
   </div>
   <div class="tweak-row">
-    <label>Music volume <span id="lblMusicVolume">100%</span></label>
+    <label>音乐音量 <span id="lblMusicVolume">100%</span></label>
     <input type="range" id="inMusicVolume" min="0" max="100" value="100">
   </div>
   <div class="tweak-row">
-    <label>Header tone</label>
+    <label>顶部色调</label>
     <div class="swatches" id="swatches">
       <div class="swatch active" data-bg="linear-gradient(rgb(12,12,14) 0%, rgb(22,22,26) 100%)" style="background:rgb(12,12,14)"></div>
       <div class="swatch" data-bg="linear-gradient(rgb(11,18,32) 0%, rgb(18,28,50) 100%)" style="background:rgb(11,18,32)"></div>
@@ -746,11 +737,11 @@ html, body {
     </div>
   </div>
   <div class="tweak-row">
-    <label>Blue hue <span id="lblBlueHue">256°</span></label>
+    <label>蓝色调 <span id="lblBlueHue">256°</span></label>
     <input type="range" id="inBlueHue" min="180" max="320" value="256">
   </div>
   <div class="tweak-row">
-    <label>Violet hue <span id="lblVioletHue">330°</span></label>
+    <label>紫色调 <span id="lblVioletHue">330°</span></label>
     <input type="range" id="inVioletHue" min="240" max="360" value="330">
   </div>
 </div>
@@ -790,8 +781,6 @@ const inDjVolume = document.getElementById('inDjVolume');
 const inMusicVolume = document.getElementById('inMusicVolume');
 const lblDjVolume = document.getElementById('lblDjVolume');
 const lblMusicVolume = document.getElementById('lblMusicVolume');
-const djLanguageControl = document.getElementById('djLanguageControl');
-let djLanguage = localStorage.getItem('seadio:dj-language') === 'zh' ? 'zh' : 'en';
 let djVolume = Number(localStorage.getItem('seadio:dj-volume') || 100) / 100;
 let baseMusicVolume = Number(localStorage.getItem('seadio:music-volume') || 100) / 100;
 let ducking = false;
@@ -806,26 +795,11 @@ const REFILL_BACKOFF_MS = 45000;
 function buildStartMessage() {
   const now = new Date();
   const hour = now.getHours();
-  const day = now.toLocaleDateString('en-US', { weekday: 'long' });
-  return `It's ${hour}:00 on a ${day}. You're on air — open the station. Pick whatever fits the moment.`;
+  const day = now.toLocaleDateString('zh-CN', { weekday: 'long' });
+  return `现在是${day} ${hour}:00。你已经上线 —— 开始这一节，选适合当下时刻的歌。`;
 }
 let startingRadio = false;
 
-function syncDjLanguageControl() {
-  djLanguageControl.querySelectorAll('button').forEach(button => {
-    const active = button.dataset.lang === djLanguage;
-    button.classList.toggle('active', active);
-    button.setAttribute('aria-pressed', String(active));
-  });
-}
-
-function setDjLanguage(value) {
-  djLanguage = value === 'zh' ? 'zh' : 'en';
-  localStorage.setItem('seadio:dj-language', djLanguage);
-  syncDjLanguageControl();
-}
-
-syncDjLanguageControl();
 
 /* ── Clock ────────────────────────────────────────────────────────── */
 function updateClock() {
@@ -1026,7 +1000,7 @@ function fmt(s) {
 /* ── Music player ─────────────────────────────────────────────────── */
 function setRadioStatus(status) {
   headerStatus.textContent = status;
-  dotLive.style.display = ['On Air', 'Speaking', 'Playing'].includes(status) ? '' : 'none';
+  dotLive.style.display = ['节目中', 'Speaking', 'Playing'].includes(status) ? '' : 'none';
   window._setWavePlaying(['Speaking', 'Playing'].includes(status));
 }
 
@@ -1034,7 +1008,7 @@ function setPlaying(v) {
   iconPlay.style.display  = v ? 'none' : '';
   iconPause.style.display = v ? '' : 'none';
   if (!ttsAudio.paused && !ttsAudio.ended) return;
-  setRadioStatus(v ? 'Playing' : 'Paused');
+  setRadioStatus(v ? 'Playing' : '已暂停');
 }
 
 musicAudio.addEventListener('play',  () => setPlaying(true));
@@ -1045,7 +1019,7 @@ musicAudio.addEventListener('ended', () => {
     duration: musicAudio.duration,
     currentTime: musicAudio.currentTime,
   });
-  if (!playNext()) setRadioStatus('Paused');
+  if (!playNext()) setRadioStatus('已暂停');
 });
 musicAudio.addEventListener('loadedmetadata', () => {
   console.info('[music] metadata', {
@@ -1058,7 +1032,7 @@ musicAudio.addEventListener('loadedmetadata', () => {
 musicAudio.addEventListener('error', () => {
   console.warn('[music] playback failed', musicAudio.error);
   addTurn('Seadio', "That link dropped out. I'll skip ahead and keep the set moving.");
-  if (!playNext()) setRadioStatus('Paused');
+  if (!playNext()) setRadioStatus('已暂停');
 });
 /* ── Prefetch next track ──────────────────────────────────────────── */
 const prefetchEl = document.createElement('audio');
@@ -1140,7 +1114,7 @@ function afterTtsFinished() {
   if (!musicAudio.paused && !musicAudio.ended) {
     setRadioStatus('Playing');
   } else {
-    setRadioStatus('Paused');
+    setRadioStatus('已暂停');
   }
 }
 ttsAudio.addEventListener('play',  () => { setRadioStatus('Speaking'); duckMusic(); });
@@ -1510,7 +1484,7 @@ function autoRefill() {
       previousIndex,
       queue: queue.map(({ query, title, artist }) => ({ query, title, artist })),
       queueLength: queue.length,
-      djLanguage,
+      djLanguage: 'zh',
     }),
   })
     .catch(err => {
@@ -1688,8 +1662,8 @@ function handleWsMessage(msg) {
       lastRefillAt = Date.now();
     }
     if (msg.jobType === 'program_start') {
-      setRadioStatus('Paused');
-      metaSub.textContent = 'Could not start Seadio FM';
+      setRadioStatus('已暂停');
+      metaSub.textContent = 'Seadio FM 启动失败';
     }
     return;
   }
@@ -1787,7 +1761,7 @@ async function requestChat(message, { showUserTurn = true } = {}) {
   await fetch(window.SeadioConfig.api('/api/chat'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, djLanguage }),
+    body: JSON.stringify({ message, djLanguage: 'zh' }),
   });
 }
 
@@ -1814,14 +1788,14 @@ async function startRadio() {
   if (startingRadio || musicAudio.src) return;
   startingRadio = true;
   playBtn.disabled = true;
-  setRadioStatus('On Air');
-  metaSub.textContent = 'Tuning Seadio FM…';
+  setRadioStatus('节目中');
+  metaSub.textContent = '正在调台…';
   try {
     await requestChat(buildStartMessage(), { showUserTurn: false });
   } catch (err) {
     console.error('[start-radio]', err);
-    setRadioStatus('Paused');
-    metaSub.textContent = 'Could not start Seadio FM';
+    setRadioStatus('已暂停');
+    metaSub.textContent = 'Seadio FM 启动失败';
   } finally {
     playBtn.disabled = false;
     startingRadio = false;
@@ -1888,11 +1862,6 @@ inMusicVolume.addEventListener('input', () => {
   setMusicVolume(Number(inMusicVolume.value) / 100);
 });
 
-djLanguageControl.addEventListener('click', e => {
-  const button = e.target.closest('button[data-lang]');
-  if (!button) return;
-  setDjLanguage(button.dataset.lang);
-});
 
 document.getElementById('swatches').addEventListener('click', e => {
   const sw = e.target.closest('.swatch');
