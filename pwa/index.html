@@ -2038,11 +2038,8 @@ document.getElementById('swatches').addEventListener('click', e => {
       location.reload();
     });
 
-    const inCapacitor = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
-    const hasOverride = !!(localStorage.getItem('seadio:server-base') || '').trim();
-    if (inCapacitor && !hasOverride) {
-      window.addEventListener('DOMContentLoaded', openDialog, { once: true });
-    }
+    // Native builds default to the public backend (see config.js), so no longer
+    // force the server-URL dialog on first run. The gear button opens it on demand.
   })();
 </script>
 <script>

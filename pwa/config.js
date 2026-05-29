@@ -1,10 +1,17 @@
 (function () {
   const KEY = 'seadio:server-base';
+  // Native (Capacitor) builds have no meaningful page origin to talk to, so they
+  // default to the public backend. Web/desktop keep using their own origin.
+  const NATIVE_DEFAULT_BASE = 'https://seadio.pokewo.cn';
+
+  function isNative() {
+    return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  }
 
   function serverBase() {
     const raw = (localStorage.getItem(KEY) || '').trim();
-    if (!raw) return location.origin;
-    return raw.replace(/\/+$/, '');
+    if (raw) return raw.replace(/\/+$/, '');
+    return isNative() ? NATIVE_DEFAULT_BASE : location.origin;
   }
 
   function setServerBase(value) {
