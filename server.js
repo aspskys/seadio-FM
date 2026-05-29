@@ -875,7 +875,10 @@ app.post('/api/tts/caller', async (req, res) => {
 
 // Serve cached TTS files
 app.get('/api/tts/:filename', (req, res) => {
-  const file = path.join(__dirname, 'cache/tts', req.params.filename);
+  const { ttsCacheDir } = require('./paths');
+  // Guard against path traversal — only serve a bare filename out of the cache dir.
+  const safe = path.basename(req.params.filename);
+  const file = path.join(ttsCacheDir, safe);
   if (!fs.existsSync(file)) return res.status(404).end();
   res.sendFile(file);
 });
