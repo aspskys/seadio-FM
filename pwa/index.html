@@ -322,6 +322,38 @@ html, body {
 #chat-mic svg { width: 16px; height: 16px; }
 #chat-mic.hidden { display: none; }
 
+/* ── Voice recording overlay ──────────────────────────────────────── */
+.voice-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  display: none; place-items: center;
+  background: rgba(0,0,0,.42); backdrop-filter: blur(6px);
+}
+.voice-overlay.visible { display: grid; }
+.voice-overlay-card {
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  padding: 30px 38px; border-radius: 22px;
+  background: rgba(28,28,32,.92); box-shadow: rgba(0,0,0,.5) 0 18px 50px;
+  border: 1px solid rgba(255,255,255,.10);
+}
+.voice-bars { display: flex; align-items: center; gap: 5px; height: 44px; }
+.voice-bars span {
+  width: 5px; height: 12px; border-radius: 3px;
+  background: rgb(255,255,255);
+  animation: voice-bar 0.9s ease-in-out infinite;
+}
+.voice-bars span:nth-child(2) { animation-delay: .12s; }
+.voice-bars span:nth-child(3) { animation-delay: .24s; }
+.voice-bars span:nth-child(4) { animation-delay: .36s; }
+.voice-bars span:nth-child(5) { animation-delay: .24s; }
+.voice-bars span:nth-child(6) { animation-delay: .12s; }
+.voice-bars span:nth-child(7) { animation-delay: 0s; }
+@keyframes voice-bar {
+  0%, 100% { height: 12px; opacity: .55; }
+  50%      { height: 40px; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .voice-bars span { animation: none; height: 26px; } }
+.voice-hint { font-size: 13px; color: rgba(255,255,255,.8); letter-spacing: .02em; }
+
 @media (max-width: 560px) {
   /* Fill the device screen edge-to-edge instead of floating a desktop card. */
   .card {
@@ -724,6 +756,14 @@ html, body {
     </div><!-- .body -->
   </div><!-- .card -->
 </div><!-- .stage -->
+
+<!-- Voice recording overlay (WeChat-style): shown while the mic is held -->
+<div class="voice-overlay" id="voice-overlay" aria-hidden="true">
+  <div class="voice-overlay-card">
+    <div class="voice-bars"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="voice-hint">正在聆听… 松开转文字</div>
+  </div>
+</div>
 
 
 <!-- Tweaks -->
@@ -1863,8 +1903,9 @@ chatInput.addEventListener('input', () => {
 });
 chatSend.addEventListener('click', sendMessage);
 
-/* ── Voice input (hold-to-speak) ─────────────────────────────────── */
+/* ── Voice input (WeChat-style: hold to record, release → text into the box) ── */
 const chatMic = document.getElementById('chat-mic');
+const voiceOverlay = document.getElementById('voice-overlay');
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!SpeechRecognition) {
@@ -1872,78 +1913,83 @@ if (!SpeechRecognition) {
 } else {
   let recognition = null;
   let recognizing = false;
-  let recognitionInsertStart = 0;
+  let captured = '';   // accumulated FINAL transcript for the current hold
 
   function ensureRecognition() {
     if (recognition) return recognition;
     recognition = new SpeechRecognition();
     recognition.lang = 'zh-CN';
-    recognition.continuous = false;
+    recognition.continuous = true;       // keep listening for the whole hold
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
-    let interim = '';
     recognition.addEventListener('result', e => {
-      let finalText = '';
-      interim = '';
+      // Accumulate only finalized pieces. Unlike before, we do NOT write to the
+      // input while recording — the text lands all at once on release (WeChat-style).
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const res = e.results[i];
-        if (res.isFinal) finalText += res[0].transcript;
-        else interim += res[0].transcript;
+        if (res.isFinal) captured += res[0].transcript;
       }
-      const fixed = chatInput.value.slice(0, recognitionInsertStart);
-      chatInput.value = fixed + finalText + interim;
-      chatInput.style.height = 'auto';
-      chatInput.style.height = Math.min(chatInput.scrollHeight, 84) + 'px';
-      if (finalText) recognitionInsertStart += finalText.length;
     });
     recognition.addEventListener('error', e => {
       console.error('[speech]', e.error);
       recognition = null;
-      stopRecognizing();
+      finishRecognizing(true);
     });
     recognition.addEventListener('end', () => {
       if (recognizing) {
-        // 用户还在按住但 recognition 自己停了，重启一次
-        try { recognition.start(); } catch (err) { console.error('[speech-restart]', err); }
+        // Still held but the engine stopped on its own — restart to keep capturing.
+        try { recognition.start(); return; } catch (err) { console.error('[speech-restart]', err); }
       }
+      commitCaptured();
     });
     return recognition;
+  }
+
+  function commitCaptured() {
+    const text = captured.trim();
+    captured = '';
+    if (!text) return;
+    const cur = chatInput.value;
+    const sep = cur && !/\s$/.test(cur) ? ' ' : '';
+    chatInput.value = (cur + sep + text).replace(/^\s+/, '');
+    chatInput.style.height = 'auto';
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 84) + 'px';
+    chatInput.focus();
   }
 
   function startRecognizing() {
     if (recognizing) return;
     const r = ensureRecognition();
     recognizing = true;
-    recognitionInsertStart = chatInput.value.length;
+    captured = '';
     chatMic.classList.add('recording');
+    if (voiceOverlay) voiceOverlay.classList.add('visible');
     try {
       r.start();
     } catch (err) {
       console.error('[speech-start]', err);
-      stopRecognizing();
+      finishRecognizing(true);
     }
   }
 
-  function stopRecognizing() {
+  // aborted=true discards the capture (error / start failure); false commits on release.
+  function finishRecognizing(aborted) {
     if (!recognizing) return;
     recognizing = false;
     chatMic.classList.remove('recording');
+    if (voiceOverlay) voiceOverlay.classList.remove('visible');
+    if (aborted) captured = '';
     if (recognition) {
       try { recognition.stop(); } catch (err) { console.error('[speech-stop]', err); }
+      // the 'end' handler runs commitCaptured() once the engine finalizes
     }
   }
 
-  // 鼠标 + 触摸两套事件
-  chatMic.addEventListener('pointerdown', e => {
-    e.preventDefault();
-    startRecognizing();
-  });
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => {
-    chatMic.addEventListener(ev, () => stopRecognizing());
-  });
-
-  // 防止上下文菜单/选中
+  chatMic.addEventListener('pointerdown', e => { e.preventDefault(); startRecognizing(); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev =>
+    chatMic.addEventListener(ev, () => finishRecognizing(false))
+  );
   chatMic.addEventListener('contextmenu', e => e.preventDefault());
 }
 

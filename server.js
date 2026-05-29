@@ -575,8 +575,26 @@ async function runProgramStartJob(job) {
   // Explicit listener requests and cold starts bypass the 24h cooldown; autoRefill keeps it.
   const allowRecent = job.source !== 'autoRefill';
   const prog = await produceProgram({ input: job.input, djLanguage: job.djLanguage, fast: !!job.fast, allowRecent });
+  if (!prog.tracks.length && job.source !== 'autoRefill') {
+    // Nothing playable resolved (commonly copyright-locked originals that only return
+    // covers, which the artist-match filter rejects). Don't break the current station —
+    // just have the DJ say so instead of leaving the listener silently skipping.
+    await announceUnavailable();
+    return prog.startPayload;
+  }
   dispatchProgram(prog, { trigger: job.source === 'autoRefill' ? 'autoRefill' : 'user' });
   return prog.startPayload;
+}
+
+// Speak a short apology over the current program when a request had no playable tracks.
+async function announceUnavailable() {
+  const programId = stationState.programId || makeProgramId();
+  const text = '你点的这首暂时版权不可用，我先接着放——换个歌手或歌名再试试。';
+  const segments = await synthesizeSegments([
+    { id: makeSegmentId(0), type: 'quick_touch', position: 'immediate', text },
+  ]);
+  addMessage('seadio', text);
+  broadcast({ type: 'segment-ready', programId, segments });
 }
 
 // Warm a generic program in the background so the next cold start is instant.
