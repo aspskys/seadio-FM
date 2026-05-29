@@ -715,7 +715,7 @@ html, body {
   <h3>设置</h3>
   <div class="tweak-row">
     <label>外观</label>
-    <div class="segmented" id="skinControl" role="group" aria-label="Skin">
+    <div class="segmented" id="skinControl" role="group" aria-label="外观">
       <button type="button" data-skin-name="default" aria-pressed="true">星空</button>
       <button type="button" data-skin-name="glass" aria-pressed="false">玻璃</button>
     </div>
@@ -799,7 +799,6 @@ function buildStartMessage() {
   return `现在是${day} ${hour}:00。你已经上线 —— 开始这一节，选适合当下时刻的歌。`;
 }
 let startingRadio = false;
-
 
 /* ── Clock ────────────────────────────────────────────────────────── */
 function updateClock() {
@@ -1000,15 +999,15 @@ function fmt(s) {
 /* ── Music player ─────────────────────────────────────────────────── */
 function setRadioStatus(status) {
   headerStatus.textContent = status;
-  dotLive.style.display = ['节目中', 'Speaking', 'Playing'].includes(status) ? '' : 'none';
-  window._setWavePlaying(['Speaking', 'Playing'].includes(status));
+  dotLive.style.display = ['节目中', '播音中', '播放中'].includes(status) ? '' : 'none';
+  window._setWavePlaying(['播音中', '播放中'].includes(status));
 }
 
 function setPlaying(v) {
   iconPlay.style.display  = v ? 'none' : '';
   iconPause.style.display = v ? '' : 'none';
   if (!ttsAudio.paused && !ttsAudio.ended) return;
-  setRadioStatus(v ? 'Playing' : '已暂停');
+  setRadioStatus(v ? '播放中' : '已暂停');
 }
 
 musicAudio.addEventListener('play',  () => setPlaying(true));
@@ -1112,12 +1111,12 @@ function afterTtsFinished() {
   finishKaraoke();
   restoreMusicVolume();
   if (!musicAudio.paused && !musicAudio.ended) {
-    setRadioStatus('Playing');
+    setRadioStatus('播放中');
   } else {
     setRadioStatus('已暂停');
   }
 }
-ttsAudio.addEventListener('play',  () => { setRadioStatus('Speaking'); duckMusic(); });
+ttsAudio.addEventListener('play',  () => { setRadioStatus('播音中'); duckMusic(); });
 ttsAudio.addEventListener('pause', () => { if (!ttsAudio.ended) restoreMusicVolume(); });
 ttsAudio.addEventListener('ended', afterTtsFinished);
 ttsAudio.addEventListener('timeupdate', () => advanceKaraoke(ttsAudio.currentTime, ttsAudio.duration || 0));
@@ -1229,7 +1228,7 @@ function addCallerTurn(text) {
 
 function playRequestLineConnect() {
   duckMusic();
-  setRadioStatus('Speaking');
+  setRadioStatus('播音中');
   return new Promise(resolve => {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) {
@@ -1496,7 +1495,7 @@ function autoRefill() {
 
 function playTrack(track) {
   metaName.textContent = track.title || track.query;
-  metaSub.textContent = track.artist ? `Now Playing · ${track.artist}` : 'Now Playing';
+  metaSub.textContent = track.artist ? `正在播放 · ${track.artist}` : '正在播放';
   if (track.artist) {
     metaSourceText.textContent = track.title + ' — ' + track.artist;
     metaSource.style.display = 'inline-flex';
@@ -1709,7 +1708,7 @@ function handleWsMessage(msg) {
         (segment.position === 'before_track' && (segment.trackIndex ?? 0) === queueIdx)
       );
       if (immediateSegments.length) speakSegmentSequence(immediateSegments);
-      else if (msg.status === 'speaking') setRadioStatus('Speaking');
+      else if (msg.status === 'speaking') setRadioStatus('播音中');
     }
   }
 
