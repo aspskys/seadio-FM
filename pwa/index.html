@@ -1594,6 +1594,28 @@ function enqueueAndPlay(tracks) {
   maybeRefillAhead();
 }
 
+// Listener asked for something specific while music was already playing: drop the old
+// queue, jump straight to the requested program, and play its first track now. Any
+// cold-open speech arrives later via segment-ready and ducks over the new track.
+function cutOverToProgram(tracks, msg) {
+  queue = tracks.slice();
+  queueIdx = 0;
+  segueStarted = false;
+  renderQueue();
+  scriptSegments = normalizeIncomingSegments(msg);
+  const track = queue[0];
+  const openers = findSegments(segment =>
+    segment.position === 'immediate' ||
+    (segment.position === 'before_track' && (segment.trackIndex ?? 0) === 0)
+  );
+  if (openers.length && openers.some(s => s.ttsUrl)) {
+    speakSegmentSequence(openers, () => playTrack(track));
+  } else {
+    playTrack(track);
+  }
+  maybeRefillAhead();
+}
+
 function normalizeIncomingSegments(msg) {
   if (Array.isArray(msg.segments) && msg.segments.length) return msg.segments;
   const segments = [];
@@ -1658,6 +1680,12 @@ function handleWsMessage(msg) {
     }
     resetProgramClock();
     const tracks = msg.tracks || [];
+    const musicLive = !!musicAudio.src && !musicAudio.paused && !musicAudio.ended;
+    if (msg.trigger === 'user' && musicLive && tracks.length) {
+      // User-requested program while music plays — cut over instead of queuing behind.
+      cutOverToProgram(tracks, msg);
+      return;
+    }
     const incomingSegments = offsetSegmentsForQueue(normalizeIncomingSegments(msg), queue.length);
     scriptSegments = [...scriptSegments, ...incomingSegments];
     if (tracks.length) enqueueAndPlay(tracks);
@@ -1819,8 +1847,8 @@ async function sendMessage() {
   chatInput.value = '';
   chatInput.style.height = 'auto';
   try {
-    // 立即切下一首，让用户感觉「即时响应」
-    fetch(window.SeadioConfig.api('/api/next'), { method: 'POST' }).catch(err => console.error('[cut-in:next]', err));
+    // The requested program cuts over when its program-start arrives (trigger:'user').
+    // No blind /api/next here — that only skipped the *old* queue before the new one landed.
     await patchCallerIntoStation(text);
   } catch (err) { console.error('[chat]', err); }
   finally { chatSend.disabled = false; }

@@ -363,14 +363,18 @@ function shouldSkipTrack(track, avoidState) {
   return { skip: false };
 }
 
-function createTrackAvoidState(extraQueue = []) {
+// allowRecent=true drops the 24h-cooldown and recent-artist filters. Used for explicit
+// user requests and cold starts: if the listener asks for a song (or just presses play),
+// honour it even if it was heard recently — the cooldown only exists to keep background
+// auto-refills varied.
+function createTrackAvoidState(extraQueue = [], { allowRecent = false } = {}) {
   const queueTracks = [
     ...stationState.tracks,
     ...(Array.isArray(extraQueue) ? extraQueue : []),
   ];
   const queueTrackKeys = new Set(queueTracks.map(trackIdentity).filter(Boolean));
   const queueUrlKeys = new Set(queueTracks.map(trackUrlIdentity).filter(Boolean));
-  const recent = recentPlays(50);
+  const recent = allowRecent ? [] : recentPlays(50);
   const cutoff = Date.now() - TRACK_REPEAT_COOLDOWN_MS;
   const cooldownTracks = recent.filter(track => Number(track.played_at) >= cutoff);
   return {
@@ -395,7 +399,7 @@ function normalizeTracksForPrompt(tracks = []) {
 async function resolveRequestedTracks(requestedTracks, options = {}) {
   const tracks = [];
   const failedTracks = [];
-  const avoidState = createTrackAvoidState(options.queue || []);
+  const avoidState = createTrackAvoidState(options.queue || [], { allowRecent: !!options.allowRecent });
   for (let i = 0; i < requestedTracks.length; i++) {
     const query = requestedTracks[i];
     const track = await getTrack(query);
@@ -504,11 +508,11 @@ function enqueueBridgeJobs({ programId, sessionTitle, tracks, startIndex = 0, pr
 // and returns the broadcast payloads WITHOUT broadcasting or mutating station state.
 // `fast` swaps the planning model to a low-latency one (used for the cold-start path
 // when no warm preload is ready).
-async function produceProgram({ input, djLanguage, fast = false } = {}) {
+async function produceProgram({ input, djLanguage, fast = false, allowRecent = false } = {}) {
   const programId = makeProgramId();
   const prompt = buildProgramStartPrompt(input || 'Open the station.', '', { djLanguage });
   const result = await callClaude(prompt, fast && PLAN_MODEL_FAST ? { model: PLAN_MODEL_FAST } : {});
-  const { tracks, failedTracks } = await resolveRequestedTracks(result.play || []);
+  const { tracks, failedTracks } = await resolveRequestedTracks(result.play || [], { allowRecent });
   const coldOpenSegments = (result.segments || []).filter(segment => segment?.type === 'cold_open');
   const idSegment = programStartIdSegment(programId);
 
@@ -549,13 +553,16 @@ async function produceProgram({ input, djLanguage, fast = false } = {}) {
 }
 
 // Apply a produced program: mutate station state, broadcast both phases, enqueue bridges.
-function dispatchProgram(prog) {
+// `trigger` tells the client how to treat the new program: 'user' = the listener
+// asked for this, so cut over to it now; 'autoRefill'/'scheduler' = background top-up,
+// deliver at the next song seam.
+function dispatchProgram(prog, { trigger = 'user' } = {}) {
   stationState.programId = prog.programId;
   stationState.sessionTitle = prog.sessionTitle;
   stationState.tracks = prog.tracks;
   if (prog.tracks.length) nowPlaying = { title: prog.tracks[0].title, artist: prog.tracks[0].artist, startedAt: Date.now() };
 
-  broadcast(prog.startPayload);
+  broadcast({ ...prog.startPayload, trigger });
   enqueueBridgeJobs({ programId: prog.programId, sessionTitle: prog.sessionTitle, tracks: prog.tracks, startIndex: 0, djLanguage: prog.djLanguage });
 
   if (prog.segmentPayload) {
@@ -565,8 +572,10 @@ function dispatchProgram(prog) {
 }
 
 async function runProgramStartJob(job) {
-  const prog = await produceProgram({ input: job.input, djLanguage: job.djLanguage, fast: !!job.fast });
-  dispatchProgram(prog);
+  // Explicit listener requests and cold starts bypass the 24h cooldown; autoRefill keeps it.
+  const allowRecent = job.source !== 'autoRefill';
+  const prog = await produceProgram({ input: job.input, djLanguage: job.djLanguage, fast: !!job.fast, allowRecent });
+  dispatchProgram(prog, { trigger: job.source === 'autoRefill' ? 'autoRefill' : 'user' });
   return prog.startPayload;
 }
 
@@ -578,7 +587,7 @@ async function refreshPreload(djLanguage = 'zh') {
     // netease matching is flaky; a 0-track warm program would broadcast silence.
     // Retry up to PRELOAD_MAX_ATTEMPTS to land a program with at least one track.
     for (let attempt = 1; attempt <= PRELOAD_MAX_ATTEMPTS; attempt++) {
-      const prog = await produceProgram({ input: 'Open the station.', djLanguage, fast: false });
+      const prog = await produceProgram({ input: 'Open the station.', djLanguage, fast: false, allowRecent: true });
       if (prog.tracks.length) {
         preloadedProgram = prog;
         console.log(`[preload] 预热完成 → 「${prog.sessionTitle || '无标题'}」${prog.tracks.length} 首`);
