@@ -1664,7 +1664,18 @@ function handleWsMessage(msg) {
     currentProgramId = msg.programId || currentProgramId;
     const incomingSegments = normalizeIncomingSegments(msg);
     scriptSegments = [...scriptSegments, ...incomingSegments];
-    maybeStartOutroTalk();
+    // Late-arriving cold-open / talkover for the track that's already playing:
+    // duck the music and speak now instead of waiting for the outro seam.
+    const overlaySegments = findSegments(segment =>
+      segment.position === 'immediate' ||
+      (segment.position === 'before_track' && segment.trackIndex === queueIdx) ||
+      (segment.position === 'after_track' && segment.trackIndex === queueIdx)
+    );
+    if (overlaySegments.length && ttsAudio.paused) {
+      speakSegmentSequence(overlaySegments);
+    } else {
+      maybeStartOutroTalk();
+    }
     return;
   }
 

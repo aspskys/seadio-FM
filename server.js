@@ -499,49 +499,41 @@ async function runProgramStartJob(job) {
   });
   const result = await callClaude(prompt);
   const { tracks, failedTracks } = await resolveRequestedTracks(result.play || []);
-  let coldOpenSegments = (result.segments || []).filter(segment => segment?.type === 'cold_open');
-  let coldOpenReason = result.reason;
-  if (tracks.length) {
-    const coldOpenPrompt = buildColdOpenForTracksPrompt({
-      programTitle: result.title || '',
-      tracks,
-      userInput: job.input || 'Open the station.',
-      djLanguage: job.djLanguage,
-    });
-    const coldOpenScript = await callClaude(coldOpenPrompt);
-    coldOpenSegments = Array.isArray(coldOpenScript.segments) ? coldOpenScript.segments : coldOpenSegments;
-    coldOpenReason = coldOpenScript.reason || coldOpenReason;
-  }
-  const coldOpenResult = {
-    ...result,
-    segments: [
-      programStartIdSegment(programId),
-      ...coldOpenSegments,
-    ],
-  };
-  const segments = await synthesizeSegments(normalizeSegments(coldOpenResult, tracks, false, failedTracks));
+  const coldOpenSegments = (result.segments || []).filter(segment => segment?.type === 'cold_open');
+  const idSegment = programStartIdSegment(programId);
 
   stationState.programId = programId;
   stationState.sessionTitle = result.title || '';
   stationState.tracks = tracks;
   if (tracks.length) nowPlaying = { title: tracks[0].title, artist: tracks[0].artist, startedAt: Date.now() };
-  addMessage('seadio', segments.filter(s => s.text).map(s => s.text).join('\n\n'));
 
-  const payload = {
+  // Phase A: tracks-first. Broadcast the program shell + tracks immediately so the
+  // PWA starts playing music while we synthesize the cold open in the background.
+  const startPayload = {
     type: 'program-start',
     programId,
     tracks,
-    segments,
+    segments: [idSegment],
     sessionTitle: result.title || '',
     stationName: STATION_NAME,
     programName: PROGRAM_NAME,
     failedTracks,
-    reason: coldOpenReason,
+    reason: result.reason,
   };
-  broadcast(payload);
+  broadcast(startPayload);
 
   enqueueBridgeJobs({ programId, sessionTitle: result.title || '', tracks, startIndex: 0, djLanguage: job.djLanguage });
-  return payload;
+
+  // Phase B: synth cold open segments and push them out separately. The PWA's
+  // segment-ready handler will duck the music and speak as soon as audio is ready.
+  if (coldOpenSegments.length) {
+    const coldOpenResult = { ...result, segments: [idSegment, ...coldOpenSegments] };
+    const segments = await synthesizeSegments(normalizeSegments(coldOpenResult, tracks, false, failedTracks));
+    addMessage('seadio', segments.filter(s => s.text).map(s => s.text).join('\n\n'));
+    broadcast({ type: 'segment-ready', programId, segments });
+  }
+
+  return startPayload;
 }
 
 async function runMusicRefillJob(job) {
