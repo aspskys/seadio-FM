@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Seadio FM — A private radio station</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -320,11 +323,24 @@ html, body {
 #chat-mic.hidden { display: none; }
 
 @media (max-width: 560px) {
-  .chat-bar { margin: 10px 12px 14px; }
+  /* Fill the device screen edge-to-edge instead of floating a desktop card. */
+  .card {
+    width: 100vw; max-width: 100vw;
+    height: 100vh; height: 100dvh;
+    border-radius: 0;
+  }
+  /* Grow the header into the notch / status-bar area and clear its content below it. */
+  .header {
+    border-radius: 0;
+    height: calc(232px + env(safe-area-inset-top));
+    padding-top: calc(22px + env(safe-area-inset-top));
+  }
+  /* Keep the input row above the home indicator. */
+  .chat-bar { margin: 10px 12px calc(14px + env(safe-area-inset-bottom)); }
   .header-tools button { width: 28px; height: 28px; }
   .header-tools button svg { width: 14px; height: 14px; }
   .header-right { gap: 8px; }
-  .tweaks { right: 12px; left: 12px; width: auto; top: 52px; }
+  .tweaks { right: 12px; left: 12px; width: auto; top: calc(52px + env(safe-area-inset-top)); }
 }
 
 /* ── Header tools cluster ─────────────────────────────────────────── */
