@@ -764,7 +764,7 @@ app.get('/api/now', (req, res) => {
   res.json(nowPlaying || { playing: false });
 });
 
-app.get('/api/next', async (req, res) => {
+app.all('/api/next', async (req, res) => {
   broadcast({ type: 'control', action: 'next' });
   res.json({ action: 'next' });
 });
