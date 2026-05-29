@@ -1750,12 +1750,12 @@ connectWS();
 
 /* ── Chat ─────────────────────────────────────────────────────────── */
 
-async function requestChat(message, { showUserTurn = true } = {}) {
+async function requestChat(message, { showUserTurn = true, coldStart = false } = {}) {
   if (showUserTurn) addUserTurn(message);
   await fetch(window.SeadioConfig.api('/api/chat'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, djLanguage: 'zh' }),
+    body: JSON.stringify({ message, djLanguage: 'zh', coldStart }),
   });
 }
 
@@ -1785,7 +1785,7 @@ async function startRadio() {
   setRadioStatus('节目中');
   metaSub.textContent = '正在调台…';
   try {
-    await requestChat(buildStartMessage(), { showUserTurn: false });
+    await requestChat(buildStartMessage(), { showUserTurn: false, coldStart: true });
   } catch (err) {
     console.error('[start-radio]', err);
     setRadioStatus('已暂停');

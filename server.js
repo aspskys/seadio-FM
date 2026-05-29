@@ -60,6 +60,14 @@ const PROGRAM_START_ID_TEXT = 'This is Seadio.';
 const TRACK_REPEAT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const ARTIST_RECENT_WINDOW = 5;
 
+// Cold-start latency: keep a fully-synthesized program warm so pressing play can
+// fire it instantly. Fall back to a low-latency planning model when none is ready.
+const PLAN_MODEL_FAST = process.env.PLAN_MODEL_FAST || 'claude-haiku-4-5';
+const PRELOAD_TTL_MS = Number(process.env.PRELOAD_TTL_MS || 10 * 60 * 1000);
+const PRELOAD_MAX_ATTEMPTS = Number(process.env.PRELOAD_MAX_ATTEMPTS || 2);
+let preloadedProgram = null;
+let preloading = false;
+
 const stationState = {
   programId: null,
   sessionTitle: '',
@@ -492,23 +500,19 @@ function enqueueBridgeJobs({ programId, sessionTitle, tracks, startIndex = 0, pr
   }
 }
 
-async function runProgramStartJob(job) {
+// Pure-ish program producer: runs the LLM plan + track resolution + cold-open TTS
+// and returns the broadcast payloads WITHOUT broadcasting or mutating station state.
+// `fast` swaps the planning model to a low-latency one (used for the cold-start path
+// when no warm preload is ready).
+async function produceProgram({ input, djLanguage, fast = false } = {}) {
   const programId = makeProgramId();
-  const prompt = buildProgramStartPrompt(job.input || 'Open the station.', job.queueState || '', {
-    djLanguage: job.djLanguage,
-  });
-  const result = await callClaude(prompt);
+  const prompt = buildProgramStartPrompt(input || 'Open the station.', '', { djLanguage });
+  const result = await callClaude(prompt, fast && PLAN_MODEL_FAST ? { model: PLAN_MODEL_FAST } : {});
   const { tracks, failedTracks } = await resolveRequestedTracks(result.play || []);
   const coldOpenSegments = (result.segments || []).filter(segment => segment?.type === 'cold_open');
   const idSegment = programStartIdSegment(programId);
 
-  stationState.programId = programId;
-  stationState.sessionTitle = result.title || '';
-  stationState.tracks = tracks;
-  if (tracks.length) nowPlaying = { title: tracks[0].title, artist: tracks[0].artist, startedAt: Date.now() };
-
-  // Phase A: tracks-first. Broadcast the program shell + tracks immediately so the
-  // PWA starts playing music while we synthesize the cold open in the background.
+  // Phase A payload: tracks-first shell so the PWA can start music immediately.
   const startPayload = {
     type: 'program-start',
     programId,
@@ -520,20 +524,89 @@ async function runProgramStartJob(job) {
     failedTracks,
     reason: result.reason,
   };
-  broadcast(startPayload);
 
-  enqueueBridgeJobs({ programId, sessionTitle: result.title || '', tracks, startIndex: 0, djLanguage: job.djLanguage });
-
-  // Phase B: synth cold open segments and push them out separately. The PWA's
-  // segment-ready handler will duck the music and speak as soon as audio is ready.
+  // Phase B payload: synth cold-open audio up front so a preload is fully ready to
+  // fire on demand. `_text` is the transcript to record into history on dispatch.
+  let segmentPayload = null;
   if (coldOpenSegments.length) {
     const coldOpenResult = { ...result, segments: [idSegment, ...coldOpenSegments] };
     const segments = await synthesizeSegments(normalizeSegments(coldOpenResult, tracks, false, failedTracks));
-    addMessage('seadio', segments.filter(s => s.text).map(s => s.text).join('\n\n'));
-    broadcast({ type: 'segment-ready', programId, segments });
+    segmentPayload = {
+      payload: { type: 'segment-ready', programId, segments },
+      text: segments.filter(s => s.text).map(s => s.text).join('\n\n'),
+    };
   }
 
-  return startPayload;
+  return {
+    programId,
+    tracks,
+    sessionTitle: result.title || '',
+    djLanguage,
+    startPayload,
+    segmentPayload,
+    producedAt: Date.now(),
+  };
+}
+
+// Apply a produced program: mutate station state, broadcast both phases, enqueue bridges.
+function dispatchProgram(prog) {
+  stationState.programId = prog.programId;
+  stationState.sessionTitle = prog.sessionTitle;
+  stationState.tracks = prog.tracks;
+  if (prog.tracks.length) nowPlaying = { title: prog.tracks[0].title, artist: prog.tracks[0].artist, startedAt: Date.now() };
+
+  broadcast(prog.startPayload);
+  enqueueBridgeJobs({ programId: prog.programId, sessionTitle: prog.sessionTitle, tracks: prog.tracks, startIndex: 0, djLanguage: prog.djLanguage });
+
+  if (prog.segmentPayload) {
+    if (prog.segmentPayload.text) addMessage('seadio', prog.segmentPayload.text);
+    broadcast(prog.segmentPayload.payload);
+  }
+}
+
+async function runProgramStartJob(job) {
+  const prog = await produceProgram({ input: job.input, djLanguage: job.djLanguage, fast: !!job.fast });
+  dispatchProgram(prog);
+  return prog.startPayload;
+}
+
+// Warm a generic program in the background so the next cold start is instant.
+async function refreshPreload(djLanguage = 'zh') {
+  if (preloading) return;
+  preloading = true;
+  try {
+    // netease matching is flaky; a 0-track warm program would broadcast silence.
+    // Retry up to PRELOAD_MAX_ATTEMPTS to land a program with at least one track.
+    for (let attempt = 1; attempt <= PRELOAD_MAX_ATTEMPTS; attempt++) {
+      const prog = await produceProgram({ input: 'Open the station.', djLanguage, fast: false });
+      if (prog.tracks.length) {
+        preloadedProgram = prog;
+        console.log(`[preload] 预热完成 → 「${prog.sessionTitle || '无标题'}」${prog.tracks.length} 首`);
+        return;
+      }
+      console.warn(`[preload] 第 ${attempt}/${PRELOAD_MAX_ATTEMPTS} 次预热解析到 0 首，重试…`);
+    }
+    console.warn('[preload] 多次预热均无可播曲目，放弃本轮预热');
+    preloadedProgram = null;
+  } catch (err) {
+    console.warn('[preload] 预热失败:', err.message);
+    preloadedProgram = null;
+  } finally {
+    preloading = false;
+  }
+}
+
+// Returns a usable warm program if one is ready and fresh, else null.
+function takePreload() {
+  if (!preloadedProgram) return null;
+  if (Date.now() - preloadedProgram.producedAt > PRELOAD_TTL_MS) {
+    console.log('[preload] 预热已过期，丢弃');
+    preloadedProgram = null;
+    return null;
+  }
+  const prog = preloadedProgram;
+  preloadedProgram = null;
+  return prog;
 }
 
 async function runMusicRefillJob(job) {
@@ -675,7 +748,7 @@ async function handleClaudeRequest(userInput, res, intent = {}, skipHistory = fa
 
 // ── HTTP Routes ──────────────────────────────────────────────────────────────
 app.post('/api/chat', async (req, res) => {
-  const { message, autoRefill, djLanguage } = req.body;
+  const { message, autoRefill, djLanguage, coldStart } = req.body;
   if (!message) return res.status(400).json({ error: 'message required' });
 
   const intent = route(message);
@@ -700,12 +773,23 @@ app.post('/api/chat', async (req, res) => {
   }
 
   if (intent.mode !== 'speech-only') {
+    // Cold-start play press: serve a warm preload instantly if we have one, then
+    // re-warm for next time. Otherwise enqueue a fast (low-latency model) job.
+    if (coldStart) {
+      const warm = takePreload();
+      if (warm) {
+        dispatchProgram(warm);
+        refreshPreload(intent.djLanguage).catch(err => console.warn('[preload] 重热失败:', err.message));
+        return res.json({ served: 'preload', jobType: 'program_start' });
+      }
+    }
     enqueueJob({
       type: 'program_start',
       key: `program_start:${Date.now()}`,
       input: intent.message,
       source: autoRefill ? 'autoRefill' : 'user',
       djLanguage: intent.djLanguage,
+      fast: !!coldStart,
     });
     return res.json({ queued: true, jobType: 'program_start' });
   }
@@ -823,4 +907,6 @@ const HOST = process.env.HOST || '0.0.0.0';
 server.listen(PORT, HOST, () => {
   console.log(`\n[电台] Seadio FM 启动 → http://${HOST}:${PORT}`);
   console.log(`[电台] 等待调度器或用户触发…\n`);
+  // Warm the first program so the initial play press is instant. Non-blocking.
+  refreshPreload().catch(err => console.warn('[preload] 启动预热失败:', err.message));
 });
