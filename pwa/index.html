@@ -268,37 +268,40 @@ html, body {
 .play-btn:hover { transform: scale(1.04); }
 .play-btn:active { transform: scale(.96); }
 
-/* ── Request line input (floating) ───────────────────────────────── */
+/* ── Request line (resident inside card body) ─────────────────────── */
 .chat-bar {
-  position: fixed; left: 16px; bottom: 16px;
-  width: 392px; max-width: calc(100vw - 32px);
-  display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
-  background: rgba(13,13,16,.76); backdrop-filter: blur(24px) saturate(1.08);
-  border: 1px solid rgba(255,255,255,.14); border-radius: 999px;
+  margin: 14px 20px 18px;
+  display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center;
+  background: rgba(13,13,16,.66); backdrop-filter: blur(20px) saturate(1.05);
+  border: 1px solid rgba(255,255,255,.12); border-radius: 999px;
   padding: 9px 10px 9px 17px;
-  box-shadow:
-    rgba(0,0,0,.44) 0 16px 36px,
-    rgba(255,255,255,.05) 0 1px 0 inset;
-  z-index: 100;
-  transition: opacity .2s, transform .2s;
+  box-shadow: rgba(0,0,0,.34) 0 8px 20px, rgba(255,255,255,.04) 0 1px 0 inset;
 }
-.chat-bar.hidden { opacity: 0; pointer-events: none; transform: translateY(8px); }
 #chat-input {
-  flex: 1; background: transparent; border: none; outline: none; resize: none;
-  color: rgba(255,255,255,.92); font-family: Inter, sans-serif;
+  background: transparent; border: none; outline: none; resize: none;
+  color: rgba(255,255,255,.92); font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 13px; line-height: 1.45; max-height: 84px; overflow-y: auto;
   padding: 6px 0;
 }
 #chat-input::placeholder { color: rgba(255,255,255,.42); }
-#chat-send {
-  flex: 0 0 auto; width: 34px; height: 34px; border-radius: 999px;
-  background: rgb(255,255,255); border: none; color: rgb(17,17,17);
-  display: grid; place-items: center; cursor: pointer;
-  transition: transform .12s, background .15s; padding: 0;
+#chat-send, #chat-mic {
+  width: 34px; height: 34px; border-radius: 999px; border: none;
+  display: grid; place-items: center; cursor: pointer; padding: 0;
+  transition: transform .12s, background .15s;
 }
+#chat-send { background: rgb(255,255,255); color: rgb(17,17,17); }
 #chat-send:hover { transform: scale(1.04); background: rgb(236,236,238); }
 #chat-send svg { width: 15px; height: 15px; }
 #chat-send:disabled { opacity: .4; cursor: not-allowed; }
+#chat-mic { background: rgba(255,255,255,.12); color: rgba(255,255,255,.92); }
+#chat-mic:hover { background: rgba(255,255,255,.20); transform: scale(1.04); }
+#chat-mic.recording { background: rgb(255,72,72); color: rgb(255,255,255); }
+#chat-mic svg { width: 16px; height: 16px; }
+#chat-mic.hidden { display: none; }
+
+@media (max-width: 560px) {
+  .chat-bar { margin: 10px 12px 14px; }
+}
 
 /* ── Header tools cluster ─────────────────────────────────────────── */
 .header-tools {
@@ -350,29 +353,6 @@ html, body {
 .swatch:hover { transform: scale(1.08); }
 .swatch.active { border-color: rgba(255,255,255,.9); }
 
-/* ── Request line toggle ─────────────────────────────────────────── */
-.chat-toggle {
-  position: fixed; left: 16px; bottom: 16px;
-  min-width: 40px; height: 40px; border-radius: 999px;
-  background: rgba(20,20,22,.85); backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.8);
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  cursor: pointer; z-index: 1001;
-  transition: transform .15s, background .15s;
-  box-shadow: rgba(0,0,0,.35) 0 8px 20px;
-  padding: 0 13px;
-  font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
-}
-.chat-toggle:hover { transform: scale(1.05); background: rgba(30,30,34,.9); }
-.chat-toggle svg { width: 16px; height: 16px; flex-shrink: 0; color: rgb(41,255,184); }
-.chat-toggle-label { display: inline-block; }
-.chat-toggle.hidden { opacity: 0; pointer-events: none; transform: translateY(8px); }
-
-@media (max-width: 560px) {
-  .chat-toggle { padding: 0; width: 40px; min-width: 40px; }
-  .chat-toggle-label { display: none; }
-  .chat-bar { width: calc(100vw - 32px); }
-}
 
 /* ══════════════════════════════════════════════════════════════════
    SKIN: Glass  —  Apple visionOS / spatial glassmorphism
@@ -511,17 +491,14 @@ html, body {
 [data-skin="glass"] .play-btn:active { transform: scale(.96); }
 
 /* ── Floating buttons: dark glass pills ── */
-[data-skin="glass"] .header-tools button,
-[data-skin="glass"] .chat-toggle {
+[data-skin="glass"] .header-tools button {
   background: rgba(255,255,255,.10);
   border-color: rgba(255,255,255,.16);
   color: rgba(255,255,255,.86);
 }
-[data-skin="glass"] .header-tools button:hover,
-[data-skin="glass"] .chat-toggle:hover {
+[data-skin="glass"] .header-tools button:hover {
   background: rgba(255,255,255,.18);
 }
-[data-skin="glass"] .chat-toggle svg { color: rgba(255,255,255,.80); }
 
 /* ── Chat bar: dark glass ── */
 [data-skin="glass"] .chat-bar {
@@ -680,31 +657,28 @@ html, body {
           </svg>
         </button>
       </div>
+
+      <!-- Request line: resident input row -->
+      <div class="chat-bar" id="chatBar">
+        <textarea id="chat-input" rows="1" placeholder="想点什么？告诉 Seadio…"></textarea>
+        <button id="chat-mic" type="button" title="按住说话" aria-label="按住说话">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="9" y="3" width="6" height="12" rx="3"/>
+            <path d="M5 11a7 7 0 0 0 14 0"/>
+            <path d="M12 18v3"/>
+          </svg>
+        </button>
+        <button id="chat-send" type="button" title="发送" aria-label="发送">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h13"/>
+            <path d="m13 6 6 6-6 6"/>
+          </svg>
+        </button>
+      </div>
     </div><!-- .body -->
   </div><!-- .card -->
 </div><!-- .stage -->
 
-<!-- Request line toggle -->
-<button class="chat-toggle" id="chatToggle" aria-label="Open request line" title="Request line">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M6.6 10.8c1.2-1.2 2.7-1.8 4.4-1.8s3.2.6 4.4 1.8"/>
-    <path d="M3.7 7.8C5.6 5.9 8.2 5 11 5s5.4.9 7.3 2.8"/>
-    <path d="M9.6 14.1c.4-.4.9-.6 1.4-.6s1 .2 1.4.6"/>
-    <path d="M11 18h.01"/>
-  </svg>
-  <span class="chat-toggle-label">Request line</span>
-</button>
-
-<!-- Chat bar -->
-<div class="chat-bar hidden" id="chatBar">
-  <textarea id="chat-input" rows="1" placeholder="Leave a note for Seadio…"></textarea>
-  <button id="chat-send" title="Patch in" aria-label="Patch in">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M5 12h13"/>
-      <path d="m13 6 6 6-6 6"/>
-    </svg>
-  </button>
-</div>
 
 <!-- Tweaks -->
 <div class="tweaks" id="tweaks">
@@ -770,7 +744,6 @@ const transcriptScroll = document.getElementById('transcriptScroll');
 const chatBar    = document.getElementById('chatBar');
 const chatInput  = document.getElementById('chat-input');
 const chatSend   = document.getElementById('chat-send');
-const chatToggle = document.getElementById('chatToggle');
 const fullscreenToggle = document.getElementById('fullscreenToggle');
 const emptyState = document.getElementById('emptyState');
 const inDjVolume = document.getElementById('inDjVolume');
@@ -1721,35 +1694,6 @@ function handleWsMessage(msg) {
 connectWS();
 
 /* ── Chat ─────────────────────────────────────────────────────────── */
-function openRequestLine() {
-  chatToggle.classList.add('hidden');
-  chatBar.classList.remove('hidden');
-  chatInput.focus();
-}
-
-function closeRequestLine() {
-  chatBar.classList.add('hidden');
-  chatToggle.classList.remove('hidden');
-  chatInput.value = '';
-  chatInput.style.height = 'auto';
-}
-
-chatToggle.addEventListener('click', e => {
-  e.stopPropagation();
-  openRequestLine();
-});
-
-chatBar.addEventListener('click', e => {
-  e.stopPropagation();
-});
-
-document.addEventListener('click', () => {
-  if (!chatBar.classList.contains('hidden')) closeRequestLine();
-});
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && !chatBar.classList.contains('hidden')) closeRequestLine();
-});
 
 async function requestChat(message, { showUserTurn = true } = {}) {
   if (showUserTurn) addUserTurn(message);
@@ -1800,7 +1744,8 @@ async function startRadio() {
 async function sendMessage() {
   const text = chatInput.value.trim();
   if (!text) return;
-  closeRequestLine();
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
   chatSend.disabled = true;
   try {
     await patchCallerIntoStation(text);
